@@ -29,3 +29,6 @@ No test runner is configured yet.
 - **Tailwind CSS v4** is wired through a Turbopack loader (`@tailwindcss/turbopack` rule for `*.css` in `next.config.ts`), not PostCSS — there is no `postcss.config` or `tailwind.config`. Theme tokens live in `app/globals.css` under `@theme inline`.
 - Route prop types use Next's generated global helpers (e.g. `LayoutProps<"/">`, `PageProps<...>`) rather than hand-written prop interfaces.
 - Import alias `@/*` maps to the repo root.
+
+## Skills
+Use /frontend-design for all user interface design work.
