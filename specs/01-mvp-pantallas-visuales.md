@@ -1,6 +1,6 @@
 # SPEC 01 — MVP visual de Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** —
 > **Fecha:** 2026-10-29
 > **Objetivo:** Portar las cinco pantallas de `references/templates/` (Biblioteca, Detalle, Reproductor, Auth y Salón de la Fama) a rutas reales del App Router con datos mock y sin juegos jugables.
@@ -95,47 +95,47 @@ Usar la skill `/frontend-design` para el trabajo de UI (indicación de `CLAUDE.m
 Antes de escribir rutas, leer en `node_modules/next/dist/docs/` lo relativo a `cacheComponents`, `searchParams`, `generateStaticParams` y `not-found`.
 
 1. **Datos mock.** Crear `lib/games.ts` con los tipos, `GAMES`, `CATS`, `getGame` y `seededScores` portados de `data.jsx`. Verificar: `npm run build` pasa.
-2. **Sesión.** Crear `lib/session.ts` (tipos, claves, helpers de lectura/escritura con `try/catch`) y `components/session-provider.tsx` (`"use client"`, contexto con `user`, `login(user)`, `logout()`, `saveScore(entry)`; lee `av_user` tras montar). Verificar: build pasa.
-3. **Layout.** Crear `components/nav.tsx` (cliente: `usePathname` para el enlace activo, panel móvil, botón de sesión) y `components/footer.tsx`. Modificar `app/layout.tsx` para envolver con `SessionProvider` y renderizar nav, `<main className="av-main">` y footer. Reemplazar `app/page.tsx` por un placeholder mínimo. Verificar: `npm run dev` muestra nav y footer con estilo retro.
+2. **Sesión.** Crear `lib/session.ts` (tipos, claves, helpers de lectura/escritura con `try/catch`) y `components/session-provider.tsx` (`"use client"`). El contexto solo lleva las acciones estables `login(user)`, `logout()` y `saveScore(entry)`. `useSession()` lee `av_user` con `useSyncExternalStore` dentro de cada consumidor (snapshot de servidor `null`) y devuelve `{ user, login, logout, saveScore }`. Verificar: build pasa.
+3. **Layout.** Crear `components/nav.tsx` (cliente: `usePathname` para el enlace activo, panel móvil, botón de sesión) y `components/footer.tsx`. Modificar `app/layout.tsx` para envolver con `SessionProvider` y renderizar nav (dentro de `<Suspense>` con la nav sin enlace activo como fallback), `<main className="av-main">` y footer. Añadir `"references/**"` a `globalIgnores` de `eslint.config.mjs`. Reemplazar `app/page.tsx` por un placeholder mínimo. Verificar: `npm run dev` muestra nav y footer con estilo retro.
 4. **Biblioteca.** Crear `components/game-card.tsx` (cliente, efecto tilt, `<Link>` al detalle) y `components/library.tsx` (cliente, buscador + chips + estado vacío). `app/page.tsx` renderiza hero + `Library`. Verificar: filtrar por "caí" deja solo CAÍDA; chip SHOOTER deja INVASORES y ROCAS.
-5. **Detalle.** Crear `components/leaderboard.tsx` y `app/juegos/[id]/page.tsx` con `generateStaticParams` y `notFound()` si `getGame` devuelve `undefined`. Verificar: `/juegos/caida` muestra 10 filas con top1–top3 resaltados.
+5. **Detalle.** Crear `components/leaderboard.tsx` y `app/juegos/[id]/page.tsx` con `generateStaticParams` y `notFound()` si `getGame` devuelve `undefined`. La lectura de `params` y el contenido van dentro de `<Suspense>` con un esqueleto ("CARGANDO JUEGO…") como fallback. Verificar: `/juegos/caida` muestra 10 filas con top1–top3 resaltados.
 6. **404.** Crear `app/not-found.tsx` con estética arcade y enlace "VOLVER AL VAULT". Verificar: `/juegos/no-existe` y `/cualquier-cosa` la muestran.
-7. **Reproductor.** Crear `components/game-player.tsx` (cliente: puntuación que sube cada 220 ms, subida de nivel, PAUSA/REANUDAR, FIN, SALIR, modal con guardar puntuación vía `saveScore`, JUGAR DE NUEVO, VOLVER AL VAULT) y `app/juegos/[id]/jugar/page.tsx` con `generateStaticParams` y `notFound()`. Verificar: FIN abre el modal y GUARDAR añade una entrada a `av_scores`.
+7. **Reproductor.** Crear `components/game-player.tsx` (cliente: puntuación que sube cada 220 ms, subida de nivel, PAUSA/REANUDAR, FIN, SALIR, modal con guardar puntuación vía `saveScore`, JUGAR DE NUEVO, VOLVER AL VAULT) y `app/juegos/[id]/jugar/page.tsx` con `generateStaticParams`, `notFound()` y la lectura de `params` dentro de `<Suspense>` (fallback: CRT con "CARGANDO…"). Verificar: FIN abre el modal y GUARDAR añade una entrada a `av_scores`.
 8. **Auth.** Crear `components/auth-form.tsx` (cliente) y `app/auth/page.tsx`. Enviar el formulario llama `login({ name: (usuario || "PLAYER1").toUpperCase().slice(0, 10) })` y navega a `/`. "JUGAR COMO INVITADO" llama `logout()` y navega a `/`. Verificar: tras entrar, la nav muestra `NOMBRE ▾`; pulsarlo cierra sesión.
-9. **Salón de la Fama.** Crear `components/hall-of-fame.tsx` y `app/salon/page.tsx`. Las pestañas son `<Link href="/salon?juego=id">`; el contenido que lee `searchParams` va dentro de `<Suspense>`. Un `juego` ausente o inválido usa `GAMES[0].id`. La fila "TU MEJOR MARCA" es un componente cliente que solo aparece con sesión. Verificar: `/salon?juego=rocas` marca la pestaña ROCAS y el podio cambia.
+9. **Salón de la Fama.** Crear `components/hall-of-fame.tsx` y `app/salon/page.tsx`. Las pestañas son `<Link href="/salon?juego=id">`; el contenido que lee `searchParams` va dentro de `<Suspense>`. Un `juego` ausente o inválido usa `GAMES[0].id`. La fila "TU MEJOR MARCA" es un componente cliente aparte, `components/hall-you-row.tsx`, que solo aparece con sesión; `hall-of-fame.tsx` sigue siendo un componente de servidor. Verificar: `/salon?juego=rocas` marca la pestaña ROCAS y el podio cambia.
 10. **Limpieza de estilos inline.** Sustituir los `style={{...}}` heredados de la plantilla por utilidades Tailwind basadas en los tokens de `@theme inline` (`text-ink-faint`, `font-pixel`, ...) sin cambiar el resultado visual. Verificar: `npm run lint` y `npm run build` pasan.
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores.
-- [ ] `npm run build` termina sin errores y lista `/juegos/[id]` y `/juegos/[id]/jugar` con los 8 ids prerenderizados.
-- [ ] `/` muestra el hero "ARCADE VAULT" y 8 tarjetas.
-- [ ] Escribir "serp" en el buscador deja solo la tarjeta SERPENTINA.
-- [ ] El chip PUZZLE deja solo CAÍDA; el chip TODOS restaura las 8.
-- [ ] Una búsqueda sin coincidencias muestra "NO HAY RESULTADOS".
-- [ ] Hacer clic en una tarjeta o en su botón JUGAR navega a `/juegos/[id]`.
-- [ ] `/juegos/bloque-buster` muestra título, tags, stat-strip y un leaderboard de 10 filas.
-- [ ] "▶ JUGAR AHORA" navega a `/juegos/[id]/jugar`; "VOLVER AL VAULT" navega a `/`.
-- [ ] `/juegos/no-existe` y `/juegos/no-existe/jugar` muestran la 404 retro.
-- [ ] En el reproductor la puntuación aumenta sola; PAUSA la detiene y muestra "EN PAUSA"; REANUDAR la continúa.
-- [ ] FIN abre el modal "FIN DEL JUEGO" con la puntuación final.
-- [ ] GUARDAR PUNTUACIÓN añade `{ game, score, name, at }` al array de `localStorage["av_scores"]` y muestra "▸ PUNTUACIÓN GUARDADA_".
-- [ ] El campo de iniciales fuerza mayúsculas y un máximo de 10 caracteres.
-- [ ] JUGAR DE NUEVO reinicia puntuación a 0, vidas a 3 y nivel a 01.
-- [ ] En `/auth` la pestaña CREAR CUENTA muestra el campo de correo; INICIAR SESIÓN lo oculta.
-- [ ] Enviar el formulario guarda `localStorage["av_user"]` y la nav muestra el nombre en mayúsculas.
-- [ ] Recargar la página mantiene la sesión visible en la nav.
-- [ ] Pulsar el botón de usuario en la nav borra `av_user` y vuelve a mostrar "Iniciar Sesión".
-- [ ] Los botones GOOGLE y GITHUB no navegan ni cambian estado.
-- [ ] `/salon` sin parámetro muestra BLOQUE BUSTER activo; `/salon?juego=caida` muestra CAÍDA activo.
-- [ ] `/salon?juego=invalido` muestra BLOQUE BUSTER activo sin error.
-- [ ] Con sesión, el salón muestra la fila "TU MEJOR MARCA EN {TÍTULO}"; sin sesión no aparece.
-- [ ] El enlace "Biblioteca" de la nav está activo en `/`, `/juegos/[id]` y `/juegos/[id]/jugar`; "Salón de la Fama" en `/salon`.
-- [ ] Con un viewport de 375 px el botón ≡ abre el panel móvil y elegir un enlace lo cierra.
-- [ ] La consola del navegador no muestra errores de hidratación en ninguna de las cinco rutas.
-- [ ] Ninguna página contiene ya contenido del scaffold de Create Next App.
+- [x] `npm run lint` termina sin errores.
+- [x] `npm run build` termina sin errores y lista `/juegos/[id]` y `/juegos/[id]/jugar` con los 8 ids prerenderizados.
+- [x] `/` muestra el hero "ARCADE VAULT" y 8 tarjetas.
+- [x] Escribir "serp" en el buscador deja solo la tarjeta SERPENTINA.
+- [x] El chip PUZZLE deja solo CAÍDA; el chip TODOS restaura las 8.
+- [x] Una búsqueda sin coincidencias muestra "NO HAY RESULTADOS".
+- [x] Hacer clic en una tarjeta o en su botón JUGAR navega a `/juegos/[id]`.
+- [x] `/juegos/bloque-buster` muestra título, tags, stat-strip y un leaderboard de 10 filas.
+- [x] "▶ JUGAR AHORA" navega a `/juegos/[id]/jugar`; "VOLVER AL VAULT" navega a `/`.
+- [x] `/juegos/no-existe` y `/juegos/no-existe/jugar` muestran la 404 retro.
+- [x] En el reproductor la puntuación aumenta sola; PAUSA la detiene y muestra "EN PAUSA"; REANUDAR la continúa.
+- [x] FIN abre el modal "FIN DEL JUEGO" con la puntuación final.
+- [x] GUARDAR PUNTUACIÓN añade `{ game, score, name, at }` al array de `localStorage["av_scores"]` y muestra "▸ PUNTUACIÓN GUARDADA_".
+- [x] El campo de iniciales fuerza mayúsculas y un máximo de 10 caracteres.
+- [x] JUGAR DE NUEVO reinicia puntuación a 0, vidas a 3 y nivel a 01.
+- [x] En `/auth` la pestaña CREAR CUENTA muestra el campo de correo; INICIAR SESIÓN lo oculta.
+- [x] Enviar el formulario guarda `localStorage["av_user"]` y la nav muestra el nombre en mayúsculas.
+- [x] Recargar la página mantiene la sesión visible en la nav.
+- [x] Pulsar el botón de usuario en la nav borra `av_user` y vuelve a mostrar "Iniciar Sesión".
+- [x] Los botones GOOGLE y GITHUB no navegan ni cambian estado.
+- [x] `/salon` sin parámetro muestra BLOQUE BUSTER activo; `/salon?juego=caida` muestra CAÍDA activo.
+- [x] `/salon?juego=invalido` muestra BLOQUE BUSTER activo sin error.
+- [x] Con sesión, el salón muestra la fila "TU MEJOR MARCA EN {TÍTULO}"; sin sesión no aparece.
+- [x] El enlace "Biblioteca" de la nav está activo en `/`, `/juegos/[id]` y `/juegos/[id]/jugar`; "Salón de la Fama" en `/salon`.
+- [x] Con un viewport de 375 px el botón ≡ abre el panel móvil y elegir un enlace lo cierra.
+- [x] La consola del navegador no muestra errores de hidratación en ninguna de las cinco rutas.
+- [x] Ninguna página contiene ya contenido del scaffold de Create Next App.
 
 ---
 
@@ -164,6 +164,19 @@ Antes de escribir rutas, leer en `node_modules/next/dist/docs/` lo relativo a `c
 - **No:** dropdown de usuario. Diseño nuevo que no está en la plantilla.
 - **Sí:** claves de `localStorage` sin versión. Compatibles con la plantilla; se versionarán si el esquema cambia.
 
+Decisiones tomadas durante la implementación:
+
+- **Sí:** el contexto de sesión solo lleva acciones y `useSession()` lee el usuario en cada consumidor. Con `user` en el provider, su actualización tras hidratar llegaba al `<Suspense>` de la nav aún deshidratado y causaba un error de hidratación.
+- **No:** `user` dentro del valor del contexto (lo que decía originalmente el paso 2).
+- **Sí:** la nav dentro de `<Suspense>`. Con `cacheComponents`, `usePathname` puede suspender en rutas con params desconocidos.
+- **Sí:** lectura de `params` dentro de `<Suspense>` en `/juegos/[id]` y `/juegos/[id]/jugar`. Con `partialPrefetching` la navegación es instantánea y desaparece el aviso "URL data outside of Suspense".
+- **No:** `export const instant = false`. Aceptaba navegaciones bloqueantes.
+- **No:** `dynamicParams = false` para devolver 404 real. No es compatible con `cacheComponents`.
+- **Sí:** ignorar `references/**` en ESLint. Las plantillas usan `React` global (UMD) y no son parte de la app.
+- **Sí:** la tarjeta es un único `<Link>` y su botón JUGAR un `<span className="btn">`, para no anidar elementos interactivos.
+- **Sí:** puntuación y nivel del reproductor en un solo estado. Evita `setState` dentro de un efecto.
+- **Sí:** `animationDelay` de las filas del salón queda como estilo inline. Es un valor calculado en runtime que Tailwind no puede generar.
+
 ---
 
 ## Riesgos
@@ -176,6 +189,8 @@ Antes de escribir rutas, leer en `node_modules/next/dist/docs/` lo relativo a `c
 | `localStorage` deshabilitado (modo privado, cuota) | Todos los accesos en `try/catch`; la app funciona sin persistir. |
 | APIs de Next 16 distintas a las conocidas | Leer `node_modules/next/dist/docs/` antes de cada paso que use APIs del framework. |
 | El intervalo del reproductor sigue corriendo al salir | Limpiar el `setInterval` en el cleanup del `useEffect`. |
+| Ids inexistentes responden HTTP 200 (soft 404) porque `notFound()` corre dentro de `<Suspense>` | Next añade `<meta name="robots" content="noindex">` y se muestra la 404 retro. Aceptado en el MVP. |
+| A ~371 px el botón ≡ desborda 32 px y aparece scroll horizontal | Heredado 1:1 de la plantilla (verificado). Corregir en un spec posterior de ajustes responsive. |
 
 ---
 
