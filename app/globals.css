@@ -3,8 +3,11 @@
  * Ported 1:1 from references/templates/styles.css.
  * Tailwind's preflight is intentionally omitted so the template's browser
  * defaults (heading weights, margins, etc.) render exactly as designed.
- * Fonts are self-hosted via next/font in app/layout.tsx and exposed as
- * --font-press-start, --font-jetbrains-mono and --font-courier-prime.
+ * Fonts are self-hosted via next/font in app/layout.tsx. The stacks below name
+ * the families directly instead of using next/font's --font-* variables: those
+ * prepend a metric-adjusted Arial fallback (Turbopack ignores
+ * adjustFontFallback: false), so glyphs the fonts lack, like "▲", would render
+ * in Arial instead of Courier New / system-ui as in the reference.
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
@@ -26,8 +29,8 @@
   --bronze: #d97a3a;
   --line: rgba(0, 245, 255, 0.18);
   --line-2: rgba(255, 255, 255, 0.06);
-  --pixel: var(--font-press-start), "Press Start 2P", system-ui, monospace;
-  --mono: var(--font-jetbrains-mono), "JetBrains Mono", var(--font-courier-prime), "Courier Prime", "Courier New", monospace;
+  --pixel: "Press Start 2P", system-ui, monospace;
+  --mono: "JetBrains Mono", "Courier Prime", "Courier New", monospace;
 }
 
 /* Expose the palette and fonts as Tailwind utilities (bg-bg-2, text-cyan, font-pixel, ...) */
