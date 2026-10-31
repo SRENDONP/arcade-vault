@@ -1182,6 +1182,8 @@
   .term-body .prompt { color: var(--cyan); margin-right: 8px; }
   .term-body .dim { color: var(--ink-dim); }
   .term-body .success { margin-top: 12px; color: var(--green); text-shadow: 0 0 6px rgba(0,255,136,0.45); font-weight: 700; white-space: pre-wrap; }
+  .term-body .error { color: var(--magenta); text-shadow: 0 0 6px rgba(255,0,110,0.45); font-weight: 700; }
+  .term-body .error.final { margin-top: 12px; white-space: pre-wrap; }
   .term-body .caret { animation: blink 1s steps(1) infinite; }
   /* misc */
   .divider { height: 1px; background: var(--line); margin: 8px 0; }
