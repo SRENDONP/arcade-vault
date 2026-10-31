@@ -11,7 +11,7 @@ export default function NotFound() {
       <p className="mx-auto mt-6 mb-8 max-w-[440px] text-ink-dim">
         Esta dirección no corresponde a ningún juego del vault. Vuelve a la biblioteca para elegir otro.
       </p>
-      <Link href="/" className="btn lg">VOLVER AL VAULT</Link>
+      <Link href="/biblioteca" className="btn lg">VOLVER AL VAULT</Link>
     </section>
   );
 }
