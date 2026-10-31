@@ -25,7 +25,7 @@ export default function SalonPage({ searchParams }: PageProps<"/salon">) {
       </Suspense>
 
       <div className="mt-8 text-center">
-        <Link href="/" className="btn lg">VOLVER A LA BIBLIOTECA</Link>
+        <Link href="/biblioteca" className="btn lg">VOLVER A LA BIBLIOTECA</Link>
       </div>
     </div>
   );

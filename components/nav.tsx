@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/components/session-provider";
 
-type Section = "biblioteca" | "salon" | "auth" | null;
+type Section = "inicio" | "biblioteca" | "salon" | "acerca" | "auth" | null;
 
 function sectionFor(pathname: string | null): Section {
   if (pathname === null) return null;
-  if (pathname === "/" || pathname.startsWith("/juegos/")) return "biblioteca";
+  if (pathname === "/") return "inicio";
+  if (pathname.startsWith("/biblioteca") || pathname.startsWith("/juegos/")) return "biblioteca";
   if (pathname.startsWith("/salon")) return "salon";
+  if (pathname.startsWith("/acerca-de")) return "acerca";
   if (pathname.startsWith("/auth")) return "auth";
   return null;
 }
@@ -34,8 +36,10 @@ export function NavBar({ pathname }: { pathname: string | null }) {
           </div>
         </Link>
         <div className="links">
-          <Link href="/" className={active("biblioteca")}>Biblioteca</Link>
+          <Link href="/" className={active("inicio")}>Inicio</Link>
+          <Link href="/biblioteca" className={active("biblioteca")}>Biblioteca</Link>
           <Link href="/salon" className={active("salon")}>Salón de la Fama</Link>
+          <Link href="/acerca-de" className={active("acerca")}>Acerca de</Link>
         </div>
         <div className="spacer"></div>
         <div className="coin-counter">
@@ -53,8 +57,10 @@ export function NavBar({ pathname }: { pathname: string | null }) {
       <div className={"av-mobile-backdrop" + (open ? " open" : "")} onClick={close}></div>
       <aside className={"av-mobile-panel" + (open ? " open" : "")}>
         <div className="pixel neon-cyan mb-4 text-[11px]">MENÚ</div>
-        <Link href="/" className={active("biblioteca")} onClick={close}>Biblioteca</Link>
+        <Link href="/" className={active("inicio")} onClick={close}>Inicio</Link>
+        <Link href="/biblioteca" className={active("biblioteca")} onClick={close}>Biblioteca</Link>
         <Link href="/salon" className={active("salon")} onClick={close}>Salón de la Fama</Link>
+        <Link href="/acerca-de" className={active("acerca")} onClick={close}>Acerca de</Link>
         <Link href="/auth" className={active("auth")} onClick={close}>{user ? "Cuenta" : "Iniciar Sesión"}</Link>
         <div className="flex-1"></div>
         <div className="pixel text-[9px] tracking-[0.16em] text-ink-faint">CRÉDITOS · 03</div>
