@@ -16,6 +16,7 @@ Development follows **Spec Driven Design** using the `/spec` and `/spec-impl` sk
 - `npm run build` — production build (also type-checks)
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint (flat config, `eslint-config-next` core-web-vitals + typescript)
+- `npm run supabase:check` — verifies the Supabase URL + publishable key in `.env.local` against the remote project (`[OK]` / `[ERR]`, exit code 0 / 1)
 
 No test runner is configured yet.
 
@@ -29,6 +30,12 @@ No test runner is configured yet.
 - **Tailwind CSS v4** is wired through a Turbopack loader (`@tailwindcss/turbopack` rule for `*.css` in `next.config.ts`), not PostCSS — there is no `postcss.config` or `tailwind.config`. Theme tokens live in `app/globals.css` under `@theme inline`.
 - Route prop types use Next's generated global helpers (e.g. `LayoutProps<"/">`, `PageProps<...>`) rather than hand-written prop interfaces.
 - Import alias `@/*` maps to the repo root.
+- **Supabase** (project `ehzxppntfcaqiobqmuub`, also reachable through the Supabase MCP) via `@supabase/ssr`. Env: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…`; no secret/service_role key in the app).
+  - `lib/supabase/client.ts` — `createClient()` for Client Components.
+  - `lib/supabase/server.ts` — `await createClient()` for Server Components, Server Actions and Route Handlers. It reads `cookies()`, so a Server Component using it must sit inside `<Suspense>`, and it must never be called inside a plain `"use cache"` scope (pass values in, or use `"use cache: private"`).
+  - `lib/supabase/database.types.ts` — generated types (`Database`); never edit by hand.
+  - Migrations workflow: write the SQL first as `supabase/migrations/YYYYMMDDHHMMSS_name.sql`, apply it with the MCP `apply_migration` using the same name, confirm with `list_migrations`, then regenerate `database.types.ts` with `generate_typescript_types`. No Supabase CLI or local stack.
 
 ## Skills
+
 Use /frontend-design for all user interface design work.
