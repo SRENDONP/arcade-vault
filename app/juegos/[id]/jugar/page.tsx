@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { createElement, Suspense } from "react";
 import { GamePlayer } from "@/components/game-player";
+import { getPlayable } from "@/games";
 import { GAMES, getGame } from "@/lib/games";
 
 export function generateStaticParams() {
@@ -9,7 +10,9 @@ export function generateStaticParams() {
 
 // Same as the detail page: the params read stays inside <Suspense> so the
 // shared App Shell can be shown instantly on navigation.
-export default function GamePlayerPage({ params }: PageProps<"/juegos/[id]/jugar">) {
+export default function GamePlayerPage({
+  params,
+}: PageProps<"/juegos/[id]/jugar">) {
   return (
     <Suspense fallback={<PlayerFallback />}>
       <Player params={params} />
@@ -31,10 +34,17 @@ function PlayerFallback() {
   );
 }
 
-async function Player({ params }: { params: PageProps<"/juegos/[id]/jugar">["params"] }) {
+async function Player({
+  params,
+}: {
+  params: PageProps<"/juegos/[id]/jugar">["params"];
+}) {
   const { id } = await params;
   const game = getGame(id);
   if (!game) notFound();
 
-  return <GamePlayer game={game} />;
+  // Real game from the registry when it exists, otherwise the simulator.
+  // createElement instead of JSX: the component comes from a static module-level
+  // registry, which the static-components lint rule cannot see through.
+  return createElement(getPlayable(id) ?? GamePlayer, { game });
 }

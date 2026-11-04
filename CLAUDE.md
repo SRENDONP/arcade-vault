@@ -36,6 +36,16 @@ No test runner is configured yet.
   - `lib/supabase/database.types.ts` — generated types (`Database`); never edit by hand.
   - Migrations workflow: write the SQL first as `supabase/migrations/YYYYMMDDHHMMSS_name.sql`, apply it with the MCP `apply_migration` using the same name, confirm with `list_migrations`, then regenerate `database.types.ts` with `generate_typescript_types`. No Supabase CLI or local stack.
 
+## Games (`games/`)
+
+- One folder per playable game: `games/<id>/`, where `<id>` is the game's `id` in `lib/games.ts`. First one: `games/caida/`.
+- Register the playable component in `games/index.ts` (`PLAYABLE` / `getPlayable`). `app/juegos/[id]/jugar/page.tsx` renders `getPlayable(id) ?? GamePlayer`; games without an entry keep the simulated `components/game-player.tsx`.
+- `core.ts` holds the game's pure logic: no React, DOM, `window` or `localStorage`.
+- `localStorage` keys of a game use the prefix `av_<id>_` (e.g. `av_caida_skin`). A run in progress is not persisted.
+- Game styles live in `games/<id>/<id>.css`, imported from the game component, with every rule scoped under the game's root class (e.g. `.caida-root`).
+- Game over goes through the shared `components/game-over-modal.tsx`, which saves with `saveScore()` from the session — the single score path that a future Supabase spec will replace.
+- With `cacheComponents`, leaving a route keeps it in a hidden `<Activity>`: React state survives, effects unmount and remount. Keep loop state in refs that are not reset on effect cleanup, and cancel `requestAnimationFrame` / listeners in every cleanup.
+
 ## Skills
 
 Use /frontend-design for all user interface design work.
