@@ -3,6 +3,7 @@
 
 import type { ComponentType } from "react";
 import { CaidaGame } from "@/games/caida/caida-game";
+import { RocasGame } from "@/games/rocas/rocas-game";
 import type { Game } from "@/lib/games";
 
 export type PlayableProps = { game: Game };
@@ -10,6 +11,7 @@ export type PlayableProps = { game: Game };
 // Solo los juegos con implementación real tienen entrada.
 export const PLAYABLE: Partial<Record<string, ComponentType<PlayableProps>>> = {
   caida: CaidaGame,
+  rocas: RocasGame,
 };
 
 export function getPlayable(

@@ -1,0 +1,166 @@
+/* ROCAS — estilos del área del juego.
+   Todas las reglas cuelgan de .rocas-root para no afectar a otras páginas.
+   El canvas tiene resolución interna fija 800×600 y se escala por CSS dentro
+   de .crt-screen, que ya es 4:3 (app/globals.css). */
+
+.rocas-root {
+  --r-overlay-bg: rgba(5, 5, 12, 0.78);
+  --r-accent: var(--cyan);
+  --r-accent-glow: rgba(0, 245, 255, 0.45);
+  --r-kbd-bg: #0d0d1a;
+  --r-kbd-border: rgba(0, 245, 255, 0.25);
+  --r-text: var(--ink-dim);
+  /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
+     estrecha para que el campo 4:3 quepa entero en pantallas bajas. */
+  --r-chrome: 380px;
+}
+
+/* ---- Marco y canvas ---- */
+.rocas-root .crt {
+  width: 100%;
+  max-width: max(320px, calc((100svh - var(--r-chrome)) * 4 / 3 + 48px));
+  margin-inline: auto;
+}
+
+/* La viñeta del CRT (::before) queda sobre el canvas; las scanlines (::after)
+   ya lo están por orden del DOM. */
+.rocas-root .crt-screen::before {
+  z-index: 1;
+}
+
+.rocas-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Overlays (inicio y pausa) sobre el campo ---- */
+.rocas-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* por encima del canvas, la viñeta y las scanlines */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--r-overlay-bg);
+  backdrop-filter: blur(2px);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.rocas-overlay-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--r-accent);
+  text-shadow: 0 0 10px var(--r-accent-glow);
+}
+
+.rocas-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--r-text);
+}
+
+.rocas-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(240px, 100%);
+}
+
+.rocas-root .btn:focus-visible {
+  outline: 2px solid var(--r-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Lista de controles ---- */
+.rocas-controls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--r-text);
+}
+
+.rocas-controls li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rocas-controls .keys {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rocas-menu .rocas-controls {
+  margin-bottom: 8px;
+}
+
+.rocas-root kbd {
+  padding: 1px 6px;
+  background: var(--r-kbd-bg);
+  border: 1px solid var(--r-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Bajo el CRT, los controles van en una fila centrada. */
+.rocas-help {
+  margin-top: 20px;
+}
+
+.rocas-help .rocas-controls {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  font-size: 12px;
+}
+
+/* ---- Móvil ---- */
+@media (max-width: 640px) {
+  .rocas-root.av-player {
+    padding-inline: 16px;
+  }
+  .rocas-root .crt {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  /* En móvil la barra del CRT solo deja el LED y el nivel. */
+  .rocas-root .crt-bottom > span:nth-child(2) {
+    display: none;
+  }
+  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
+  .rocas-root .hud-actions {
+    width: 100%;
+  }
+  .rocas-root .hud-actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .rocas-overlay {
+    gap: 10px;
+  }
+  .rocas-overlay-title {
+    font-size: 14px;
+  }
+}
