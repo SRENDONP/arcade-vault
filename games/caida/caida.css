@@ -1,0 +1,383 @@
+/* CAÍDA — estilos del área del juego.
+   Todas las reglas cuelgan de .caida-root para no afectar a otras páginas.
+   Las variables siguen los nombres de la referencia (--board-bg, --grid,
+   --block-shine, …) mapeadas a la paleta neón de la plataforma. */
+
+.caida-root {
+  --c-bg: #03030a;
+  --c-text: var(--ink);
+  --c-label: var(--ink-faint);
+  --c-muted: var(--ink-dim);
+  --c-accent: var(--cyan);
+  --c-accent-glow: rgba(0, 245, 255, 0.45);
+  --board-bg: #05050d;
+  --board-border: rgba(0, 245, 255, 0.35);
+  --board-shadow: rgba(0, 245, 255, 0.18);
+  --grid: rgba(0, 245, 255, 0.07);
+  --block-shine: rgba(255, 255, 255, 0.12);
+  --kbd-bg: #0d0d1a;
+  --kbd-border: rgba(0, 245, 255, 0.25);
+  --kbd-text: var(--ink-dim);
+  --overlay-bg: rgba(3, 3, 10, 0.82);
+  --c-level: var(--yellow);
+}
+
+/* Tema claro: solo cambia la pantalla del juego. El HUD, el nav y el footer
+   de la plataforma siguen oscuros (la plataforma no tiene modo claro). */
+.caida-root[data-theme="light"] {
+  --c-bg: #e8ebf6;
+  --c-text: #1b1f33;
+  --c-label: #5f6587;
+  --c-muted: #3f4565;
+  --c-accent: #0068a8;
+  --c-accent-glow: rgba(0, 104, 168, 0.25);
+  --c-level: #8a6d00;
+  --board-bg: #ffffff;
+  --board-border: #b9bfd6;
+  --board-shadow: rgba(40, 50, 110, 0.16);
+  --grid: #e1e4ef;
+  --block-shine: rgba(255, 255, 255, 0.35);
+  --kbd-bg: #dde1ef;
+  --kbd-border: #b5bbd3;
+  --kbd-text: #2c3150;
+  --overlay-bg: rgba(232, 235, 246, 0.86);
+}
+
+/* Neon: fondo negro siempre, sea cual sea el tema (igual que la referencia).
+   Va después del tema claro para ganarle con la misma especificidad. */
+.caida-root[data-skin="neon"] {
+  --c-bg: #000000;
+  --c-text: #e0f7ff;
+  --c-label: #5a7a8c;
+  --c-muted: #8fb3c4;
+  --c-accent: #00f0ff;
+  --c-accent-glow: rgba(0, 240, 255, 0.7);
+  --c-level: var(--yellow);
+  --board-bg: #000000;
+  --board-border: rgba(0, 240, 255, 0.33);
+  --board-shadow: rgba(0, 240, 255, 0.25);
+  --grid: #0b1620;
+  --block-shine: rgba(255, 255, 255, 0.12);
+  --kbd-bg: #06121a;
+  --kbd-border: rgba(0, 240, 255, 0.27);
+  --kbd-text: #9fe9f5;
+  --overlay-bg: rgba(0, 0, 0, 0.8);
+}
+
+/* Los botones de la plataforma (.btn) son texto claro sobre transparente:
+   en el tema claro se oscurecen para que se lean sobre la pantalla clara. */
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .crt-screen .btn {
+  color: var(--c-text);
+  border-color: var(--c-accent);
+}
+.caida-root[data-theme="light"]:not([data-skin="neon"])
+  .crt-screen
+  .btn.yellow {
+  border-color: var(--c-level);
+}
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .crt-screen .btn.ghost {
+  color: var(--c-muted);
+  border-color: var(--c-label);
+}
+/* Scanlines y viñeta del CRT más suaves sobre fondo claro. */
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .crt-screen::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(20, 30, 80, 0.05) 0 2px,
+    transparent 2px 4px
+  );
+}
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .crt-screen::before {
+  background: radial-gradient(
+    120% 90% at 50% 50%,
+    transparent 65%,
+    rgba(20, 30, 80, 0.22)
+  );
+}
+
+/* El CRT de la plataforma es 4:3; el tablero es vertical, así que la
+   pantalla crece con su contenido. */
+.caida-root .crt-screen {
+  aspect-ratio: auto;
+  background: var(--c-bg);
+  transition: background-color 200ms ease;
+}
+
+.caida-root .hud-stat.lines .v {
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.5);
+}
+
+.caida-root .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- Escenario: tablero + panel ---- */
+.caida-stage {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 28px 24px;
+  color: var(--c-text);
+}
+
+.caida-board {
+  display: block;
+  /* resolución interna 300×600; por CSS se escala para pantallas bajas */
+  height: clamp(360px, calc(100vh - 300px), 600px);
+  width: auto;
+  aspect-ratio: 1 / 2;
+  background: var(--board-bg);
+  border: 1px solid var(--board-border);
+  box-shadow:
+    0 0 32px var(--board-shadow),
+    inset 0 0 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Panel lateral ---- */
+.caida-panel {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.caida-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.caida-label {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-label);
+}
+
+.caida-next {
+  display: block;
+  width: 120px;
+  height: 120px;
+  background: var(--board-bg);
+  border: 1px solid var(--board-border);
+}
+
+.caida-select {
+  height: 34px;
+  padding: 0 8px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--c-text);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.caida-select:focus-visible,
+.caida-toggle:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.caida-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--c-muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.caida-switch {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+}
+
+.caida-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--c-accent);
+  box-shadow: 0 0 8px var(--c-accent-glow);
+  transition: transform 160ms ease;
+}
+
+.caida-toggle[aria-checked="true"] .caida-switch::after {
+  transform: translateX(18px);
+}
+
+.caida-controls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
+.caida-controls li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.caida-controls .keys {
+  display: flex;
+  gap: 4px;
+}
+
+.caida-root kbd {
+  padding: 1px 6px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--kbd-text);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ---- Overlays sobre el tablero ---- */
+.caida-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(3px);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.caida-overlay-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--c-accent);
+  text-shadow: 0 0 10px var(--c-accent-glow);
+}
+
+.caida-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--c-muted);
+}
+
+/* ---- Menú de pausa ---- */
+.caida-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(240px, 100%);
+}
+
+.caida-menu .caida-controls {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.caida-root .btn:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 3px;
+}
+
+.caida-start-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.caida-stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.caida-stepper output {
+  min-width: 3ch;
+  font-family: var(--pixel);
+  font-size: 18px;
+  color: var(--c-level);
+  text-shadow: 0 0 6px rgba(245, 255, 0, 0.5);
+}
+
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .caida-stepper output,
+.caida-root[data-theme="light"]:not([data-skin="neon"]) .caida-overlay-title {
+  text-shadow: none;
+}
+
+.caida-step {
+  width: 34px;
+  height: 34px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--c-text);
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.caida-step:hover:not(:disabled),
+.caida-step:focus-visible {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  outline: none;
+  box-shadow: 0 0 10px var(--c-accent-glow);
+}
+
+.caida-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .caida-stage {
+    gap: 20px;
+    padding: 20px 12px;
+  }
+  .caida-panel {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caida-root .crt-screen,
+  .caida-switch::after {
+    transition: none;
+  }
+}
