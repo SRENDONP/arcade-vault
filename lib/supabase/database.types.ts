@@ -14,13 +14,60 @@ export type Database = {
   };
   public: {
     Tables: {
-      [_ in never]: never;
+      scores: {
+        Row: {
+          created_at: string;
+          game_id: string;
+          id: number;
+          name: string;
+          score: number;
+        };
+        Insert: {
+          created_at?: string;
+          game_id: string;
+          id?: never;
+          name: string;
+          score: number;
+        };
+        Update: {
+          created_at?: string;
+          game_id?: string;
+          id?: never;
+          name?: string;
+          score?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      player_best: {
+        Args: { p_game_id: string; p_name: string };
+        Returns: {
+          created_at: string;
+          rank: number;
+          score: number;
+        }[];
+      };
+      submit_score: {
+        Args: { p_game_id: string; p_name: string; p_score: number };
+        Returns: {
+          created_at: string;
+          rank: number;
+          score: number;
+        }[];
+      };
+      top_scores: {
+        Args: { p_game_id: string; p_limit?: number };
+        Returns: {
+          created_at: string;
+          name: string;
+          rank: number;
+          score: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

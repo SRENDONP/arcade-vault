@@ -34,7 +34,8 @@ No test runner is configured yet.
   - `lib/supabase/client.ts` — `createClient()` for Client Components.
   - `lib/supabase/server.ts` — `await createClient()` for Server Components, Server Actions and Route Handlers. It reads `cookies()`, so a Server Component using it must sit inside `<Suspense>`, and it must never be called inside a plain `"use cache"` scope (pass values in, or use `"use cache: private"`).
   - `lib/supabase/database.types.ts` — generated types (`Database`); never edit by hand.
-  - Migrations workflow: write the SQL first as `supabase/migrations/YYYYMMDDHHMMSS_name.sql`, apply it with the MCP `apply_migration` using the same name, confirm with `list_migrations`, then regenerate `database.types.ts` with `generate_typescript_types`. No Supabase CLI or local stack.
+  - Migrations workflow: write the SQL first as `supabase/migrations/YYYYMMDDHHMMSS_name.sql`, apply it with the MCP `apply_migration` using the same name, confirm with `list_migrations`, then regenerate `database.types.ts` with `generate_typescript_types`. `apply_migration` records its own timestamp, so rename the file to the version `list_migrations` reports. No Supabase CLI or local stack.
+  - Leaderboard: one `public.scores` table for every game (`game_id`, `name`, `score`, `created_at`). The only write path is the RPC `submit_score` (security definer; direct INSERT/UPDATE/DELETE is revoked from `anon`/`authenticated`). Reads go through `top_scores` (best mark per name) and `player_best`. Rules shared with the SQL live in `lib/scores.ts`; server reads in `lib/scores-server.ts` (`getTopScores`, request-time inside `<Suspense>`).
 
 ## Games (`games/`)
 
@@ -43,7 +44,7 @@ No test runner is configured yet.
 - `core.ts` holds the game's pure logic: no React, DOM, `window` or `localStorage`.
 - `localStorage` keys of a game use the prefix `av_<id>_` (e.g. `av_caida_skin`). A run in progress is not persisted.
 - Game styles live in `games/<id>/<id>.css`, imported from the game component, with every rule scoped under the game's root class (e.g. `.caida-root`).
-- Game over goes through the shared `components/game-over-modal.tsx`, which saves with `saveScore()` from the session — the single score path that a future Supabase spec will replace.
+- Game over goes through the shared `components/game-over-modal.tsx`, which saves with the Server Action `submitScore()` (`app/juegos/actions.ts`) — the single score path. Only games registered in `PLAYABLE` are ranked (`isRanked`); pass `ranked` to the modal (`true` for real games, `false` for the simulator).
 - With `cacheComponents`, leaving a route keeps it in a hidden `<Activity>`: React state survives, effects unmount and remount. Keep loop state in refs that are not reset on effect cleanup, and cancel `requestAnimationFrame` / listeners in every cleanup.
 
 ## Skills
