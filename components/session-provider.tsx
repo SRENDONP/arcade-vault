@@ -2,18 +2,15 @@
 
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
 import {
-  appendScore,
   parseUser,
   readUserRaw,
   writeUser,
-  type SavedScore,
   type User,
 } from "@/lib/session";
 
 type SessionActions = {
   login: (user: User) => void;
   logout: () => void;
-  saveScore: (entry: Omit<SavedScore, "at">) => void;
 };
 
 const SessionContext = createContext<SessionActions | null>(null);
@@ -44,7 +41,6 @@ const actions: SessionActions = {
     writeUser(null);
     notify();
   },
-  saveScore: (entry) => appendScore({ ...entry, at: Date.now() }),
 };
 
 // The context only carries the (stable) actions. The user is read from the

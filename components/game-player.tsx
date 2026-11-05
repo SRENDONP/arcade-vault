@@ -99,7 +99,7 @@ export function GamePlayer({ game }: { game: Game }) {
       </div>
 
       {over && (
-        <GameOverModal game={game} score={run.score} onRestart={restart} />
+        <GameOverModal game={game} score={run.score} ranked={false} onRestart={restart} />
       )}
     </div>
   );

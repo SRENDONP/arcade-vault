@@ -478,6 +478,7 @@ export function RocasGame({ game }: PlayableProps) {
         <GameOverModal
           game={game}
           score={stats.score}
+          ranked
           extra={[
             { label: "Nivel", value: pad2(stats.level) },
             { label: "Rocas destruidas", value: String(stats.destroyed) },

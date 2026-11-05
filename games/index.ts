@@ -14,6 +14,12 @@ export const PLAYABLE: Partial<Record<string, ComponentType<PlayableProps>>> = {
   rocas: RocasGame,
 };
 
+// Only real games save to the leaderboard: the simulator raises its own score.
+// Reads only the keys, so a Server Action can call it without rendering anything.
+export function isRanked(id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(PLAYABLE, id);
+}
+
 export function getPlayable(
   id: string,
 ): ComponentType<PlayableProps> | undefined {

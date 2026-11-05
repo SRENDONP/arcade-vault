@@ -930,6 +930,7 @@ export function CaidaGame({ game }: PlayableProps) {
         <GameOverModal
           game={game}
           score={stats.score}
+          ranked
           extra={[
             { label: "Líneas", value: String(stats.lines) },
             { label: "Combo máx.", value: String(stats.maxCombo) },
