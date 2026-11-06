@@ -1,0 +1,173 @@
+/* SERPENTINA — estilos del área del juego (SPEC 09).
+   Todas las reglas cuelgan de .serpentina-root para no afectar a otras páginas.
+   El canvas tiene resolución interna fija 576×576 y se escala por CSS dentro
+   de .crt-screen, que aquí pasa de 4:3 (app/globals.css) a 1:1.
+   Acento verde: el color del catálogo y de la serpiente. */
+
+.serpentina-root {
+  --g-overlay-bg: rgba(5, 5, 12, 0.78);
+  --g-accent: var(--green);
+  --g-accent-glow: rgba(0, 255, 136, 0.45);
+  --g-kbd-bg: #0d0d1a;
+  --g-kbd-border: rgba(0, 255, 136, 0.25);
+  --g-text: var(--ink-dim);
+  /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
+     estrecha para que el campo cuadrado quepa entero en pantallas bajas. */
+  --g-chrome: 380px;
+}
+
+/* ---- Marco y canvas ---- */
+.serpentina-root .crt {
+  width: 100%;
+  max-width: max(320px, calc((100svh - var(--g-chrome)) + 48px));
+  margin-inline: auto;
+}
+
+/* Campo 576×576: pantalla 1:1 en lugar del 4:3 de la plataforma. */
+.serpentina-root .crt-screen {
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+}
+
+/* La viñeta del CRT (::before) queda sobre el canvas; las scanlines (::after)
+   ya lo están por orden del DOM. */
+.serpentina-root .crt-screen::before {
+  z-index: 1;
+}
+
+.serpentina-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Overlays (inicio y pausa) sobre el campo ---- */
+.serpentina-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* por encima del canvas, la viñeta y las scanlines */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--g-overlay-bg);
+  backdrop-filter: blur(2px);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.serpentina-overlay-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--g-accent);
+  text-shadow: 0 0 10px var(--g-accent-glow);
+}
+
+.serpentina-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--g-text);
+}
+
+.serpentina-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(240px, 100%);
+}
+
+.serpentina-root .btn:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Lista de controles ---- */
+.serpentina-controls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--g-text);
+}
+
+.serpentina-controls li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.serpentina-controls .keys {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.serpentina-menu .serpentina-controls {
+  margin-bottom: 8px;
+}
+
+.serpentina-root kbd {
+  padding: 1px 6px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Bajo el CRT, los controles van en una fila centrada. */
+.serpentina-help {
+  margin-top: 20px;
+}
+
+.serpentina-help .serpentina-controls {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  font-size: 12px;
+}
+
+/* ---- Móvil ---- */
+@media (max-width: 640px) {
+  .serpentina-root.av-player {
+    padding-inline: 16px;
+  }
+  .serpentina-root .crt {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  /* En móvil la barra del CRT solo deja el LED y el nivel. */
+  .serpentina-root .crt-bottom > span:nth-child(2) {
+    display: none;
+  }
+  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
+  .serpentina-root .hud-actions {
+    width: 100%;
+  }
+  .serpentina-root .hud-actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .serpentina-overlay {
+    gap: 10px;
+  }
+  .serpentina-overlay-title {
+    font-size: 14px;
+  }
+}
