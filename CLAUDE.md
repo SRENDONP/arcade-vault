@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Idioma
+
+Responde siempre en español: en la conversación, en los informes de subagentes y al ejecutar skills. El código y los identificadores siguen las convenciones del repo.
+
 ## Project
 
 Arcade Vault is an online platform for playing games and competing for the highest score. The README (in Spanish) is the source for product intent; UI copy is in Spanish.
@@ -92,6 +96,14 @@ Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`b
 - With `cacheComponents`, leaving a route keeps it in a hidden `<Activity>`: React state survives, effects unmount and remount. Keep loop state in refs that are not reset on effect cleanup, and cancel `requestAnimationFrame` / listeners in every cleanup.
 
 `references/` holds the source material games and screens are ported from (`arkanoid`, `asteroids`, `claude-tetris`, `snake`, `home-about`, `templates`). It is read-only input: not compiled, linted or formatted, and nothing in `app/` imports from it.
+
+## Agents
+
+Project subagents live in `.claude/agents/` (one `.md` per agent, with frontmatter: `name`, `description`, `tools`, `model`, `memory`). Invoke them with the Agent tool using `subagent_type: "<name>"`, or just ask for the task their `description` covers.
+
+- `game-planner` (`.claude/agents/game-planner.md`; tools `Read, Glob, Grep, Write, Edit`; `model: inherit`; `memory: project`) — plans and decides which game fits the platform next. It reads the catalog (`lib/games.ts`), `PLAYABLE` (`games/index.ts`), `references/` and the integration contract (`.claude/skills/nuevo-juego/integracion.md`), and proposes 1–3 candidates with a final recommendation. It does not write code or specs. It keeps a persistent memory of past suggestions (proposed / chosen / discarded / implemented) in `.claude/agent-memory/game-planner/` (`MEMORY.md` + `sugerencias.md`), committed to git, and keeps the checklist `references/game-suggestion-todo.md` in sync — the only file it may write outside its memory.
+  - Flow for a new game: `game-planner` (pick the game) → `/nuevo-juego` (write its spec) → `/spec-impl` (implement it on `spec-NN-<name>`).
+  - Use it when asked "qué juego sigue", for game ideas, or to review earlier suggestions.
 
 ## Skills
 
