@@ -50,3 +50,5 @@ No test runner is configured yet.
 ## Skills
 
 Use /frontend-design for all user interface design work.
+
+Use /nuevo-juego to add a playable game (from a `references/` folder or from scratch): it writes the game's spec and carries the fixed integration contract (`.claude/skills/nuevo-juego/integracion.md`) and scaffolds derived from `games/rocas/`.
