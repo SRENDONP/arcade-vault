@@ -2,6 +2,7 @@
 // su componente. Los juegos sin entrada usan el simulador (GamePlayer).
 
 import type { ComponentType } from "react";
+import { BloqueBusterGame } from "@/games/bloque-buster/bloque-buster-game";
 import { CaidaGame } from "@/games/caida/caida-game";
 import { RocasGame } from "@/games/rocas/rocas-game";
 import type { Game } from "@/lib/games";
@@ -10,6 +11,7 @@ export type PlayableProps = { game: Game };
 
 // Solo los juegos con implementación real tienen entrada.
 export const PLAYABLE: Partial<Record<string, ComponentType<PlayableProps>>> = {
+  "bloque-buster": BloqueBusterGame,
   caida: CaidaGame,
   rocas: RocasGame,
 };
