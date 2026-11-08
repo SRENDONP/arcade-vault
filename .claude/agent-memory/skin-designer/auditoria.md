@@ -1,0 +1,10 @@
+# Auditoría de skins
+
+Una fila por juego de `PLAYABLE`. Estados: `no cumple` · `parcial` · `cumple`.
+
+| Fecha      | Juego         | Skins                         | Default | Oscuro OK              | Estado    | Notas                                                                                                                                                                                                                             |
+| ---------- | ------------- | ----------------------------- | ------- | ---------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-08 | caida         | retro, neon, pastel, pixel    | retro   | parcial (fantasma)     | parcial   | Falta `clasico` (default). Label "Neon" sin tilde. Fantasma alpha 0.2 → 1.1–1.7:1 en todos. Tema claro: retro/pastel/pixel < 3:1 en varias piezas. Sin `render.ts`: dibujo en `caida-game.tsx`. Pastel: O vs SINGLE casi iguales. |
+| 2026-11-08 | rocas         | clasico, neon, retro          | clasico | sí (peor 5.15 powerUp) | cumple    | Implementado. Paletas en `games/rocas/skins.ts` (style vector/outline/pixel, glow, fillAlpha, cell). Partículas con alfa < 3:1 al apagarse en clasico/neon (decorativas); retro sin alfa. Guardia de teclado antes de `pressed.add`. |
+| 2026-11-08 | bloque-buster | ninguno (COLOR + BRICK_COLOR) | —       | parcial                | no cumple | `#ffffff` sueltos (destello, "+3"). "+3" blanco/naranja 2.39:1; techo 2.56:1; gris dañado 2.93:1; magenta vs red 1.08:1. `prefs.ts` solo `muted`. Esfuerzo medio-alto.                                                            |
+| 2026-11-08 | serpentina    | ninguno (COLOR fijo)          | —       | sí (cola 3.56)         | no cumple | `#ffd0e4` suelto (brillo comida). Rejilla de puntos 1.26:1 (decorativa). Esfuerzo medio.                                                                                                                                          |

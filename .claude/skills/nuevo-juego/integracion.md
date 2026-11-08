@@ -16,7 +16,8 @@ games/
     render.ts           # dibujo en canvas a partir del estado (opcional si el dibujo es trivial)
     <id>-game.tsx       # "use client": canvas, bucle, entrada, HUD, inicio, pausa, fin
     <id>.css            # estilos bajo .<id>-root
-    prefs.ts            # solo si hay preferencias (ver games/caida/prefs.ts)
+    skins.ts            # skins clasico / neon / retro (obligatorio, ver §7)
+    prefs.ts            # preferencias en localStorage; como mínimo av_<id>_skin (ver games/caida/prefs.ts)
 lib/games.ts            # entrada del catálogo (existente o nueva)
 app/globals.css         # solo si el juego es nuevo: clase cover-<algo>
 ```
@@ -114,13 +115,27 @@ Salir con SALIR oculta la ruta pero conserva el estado de React; los efectos se 
 - Revisar a 1440 px y 390 px sin scroll horizontal del área del juego.
 - Glow (`shadowBlur`) solo en los elementos principales, por rendimiento.
 
-## 6. Preferencias (solo si el spec las pide)
+## 6. Preferencias (la del skin siempre; el resto solo si el spec las pide)
 
 - Claves `av_<id>_*`, todo acceso en `try/catch` (ver `games/caida/prefs.ts`).
 - Render inicial con valores por defecto; `readPrefs()` solo en `useEffect` (sin desajuste de hidratación).
 - Valores inválidos → por defecto. Con `localStorage` bloqueado el juego se juega igual.
 
-## 7. Checklist de verificación
+## 7. Skins (obligatorio)
+
+Todo juego jugable trae al menos tres skins. El estándar completo y su auditoría los lleva el agente `skin-designer` (`.claude/agents/skin-designer.md`); patrón de código en `games/caida/`.
+
+- `games/<id>/skins.ts`: `SkinName` con `"clasico" | "neon" | "retro"` (+ extras), `DEFAULT_SKIN = "clasico"`, `SKINS` con `label` (`Clásico`, `Neón`, `Retro`) y una paleta tipada con todos los colores del juego; `isSkinName` y `getSkin`.
+  - **clásico**: la paleta neón de la plataforma (el aspecto por defecto del juego).
+  - **neón**: fondo negro, colores saturados, contorno + `shadowBlur`.
+  - **retro**: paleta limitada de 8 bits, sin glow, bordes duros/pixelados.
+- `render.ts` recibe el skin (`drawFrame(ctx, state, skin)`); no hay constante `COLOR` fija.
+- Preferencia `av_<id>_skin` (ver §6), leída con `useSyncExternalStore` como en `caida-game.tsx`; `data-skin` en el root; selector `<select>` fuera del menú de pausa que hace `blur()` al cambiar, y las teclas del juego se ignoran mientras el foco está en él.
+- CSS por `.<id>-root[data-skin="…"]`.
+- **Modo oscuro**: fondo oscuro en los tres skins; contraste ≥ 3:1 de cada elemento contra el fondo y ≥ 4.5:1 en textos.
+- Los skins no cambian `core.ts` ni la puntuación.
+
+## 8. Checklist de verificación
 
 Build y código:
 
@@ -137,6 +152,7 @@ Navegador (`npm run dev`, Playwright o Chrome MCP):
 - [ ] SALIR durante la partida y volver: en pausa, sin bucles ni listeners duplicados.
 - [ ] Sin errores ni avisos de hidratación en consola.
 - [ ] 1440 px y 390 px: el canvas cabe y mantiene la proporción.
+- [ ] El selector cambia entre Clásico, Neón y Retro (Clásico por defecto), el skin persiste al recargar (`av_<id>_skin`) y los tres se leen bien en oscuro (§7).
 
 Ranking (Supabase MCP):
 

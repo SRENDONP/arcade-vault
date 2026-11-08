@@ -15,6 +15,50 @@
   --r-chrome: 380px;
 }
 
+/* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
+.rocas-root[data-skin="neon"] {
+  --r-overlay-bg: rgba(0, 0, 0, 0.82);
+  --r-accent: #00f0ff;
+  --r-accent-glow: rgba(0, 240, 255, 0.85);
+  --r-kbd-bg: #00080c;
+  --r-kbd-border: rgba(0, 240, 255, 0.5);
+}
+
+.rocas-root[data-skin="neon"] .crt-screen {
+  background: #000000;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+}
+
+.rocas-root[data-skin="retro"] {
+  --r-overlay-bg: rgba(15, 15, 27, 0.88);
+  --r-accent: #5fcde4;
+  --r-accent-glow: transparent;
+  --r-kbd-bg: #0f0f1b;
+  --r-kbd-border: #5fcde4;
+}
+
+.rocas-root[data-skin="retro"] .crt-screen {
+  background: #0f0f1b;
+}
+
+/* Retro: scanlines CRT más marcadas y sin desenfoque en los overlays. */
+.rocas-root[data-skin="retro"] .crt-screen::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.42) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+.rocas-root[data-skin="retro"] .rocas-overlay {
+  backdrop-filter: none;
+}
+
+.rocas-root[data-skin="retro"] .rocas-select,
+.rocas-root[data-skin="retro"] kbd {
+  border-radius: 0;
+}
+
 /* ---- Marco y canvas ---- */
 .rocas-root .crt {
   width: 100%;
@@ -120,9 +164,44 @@
   line-height: 1.5;
 }
 
-/* Bajo el CRT, los controles van en una fila centrada. */
-.rocas-help {
+/* Bajo el CRT, los controles y el selector de skin van en una fila centrada. */
+.rocas-skin-row {
   margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 32px;
+}
+
+.rocas-skin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rocas-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--r-text);
+}
+
+.rocas-select {
+  height: 30px;
+  padding: 0 8px;
+  background: var(--r-kbd-bg);
+  border: 1px solid var(--r-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rocas-select:focus-visible {
+  outline: 2px solid var(--r-accent);
+  outline-offset: 2px;
 }
 
 .rocas-help .rocas-controls {
