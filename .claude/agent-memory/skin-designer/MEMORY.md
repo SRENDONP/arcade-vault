@@ -12,12 +12,14 @@ Diseñador de skins de Arcade Vault. Estado por juego en [auditoria.md](auditori
 ## Estado general
 
 - 2026-11-08, primera auditoría: CAÍDA `parcial` (falta `clasico`); ROCAS, BLOQUE BUSTER y SERPENTINA `no cumple` (sin skins).
-- 2026-11-08: ROCAS, CAÍDA y SERPENTINA `cumple`. Pendiente: bloque-buster.
+- 2026-11-08: los cuatro de `PLAYABLE` (rocas, caida, serpentina, bloque-buster) `cumple`. Nada pendiente.
 - Ojo en juegos con teclas mantenidas (`pressedRef` leído por el bucle, p. ej. ROCAS): la guardia del `<select>` va antes de `pressed.add`, no después de las fases como en CAÍDA; si no, ↑ en el selector propulsa.
 - Registro público del estado en `references/game-with-themes.md` (actualizar tras cada auditoría/implementación).
 - `npx prettier --write games/<id>` reescribe el fin de línea de `core.ts`: formatea solo los archivos tocados o restaura `core.ts` con `git checkout`.
 - Estilo `outline`: las marcas sobre formas translúcidas (ojos, cruz) van del color de la forma, no del fondo.
 - CAÍDA: `sessionPrefs` manda sobre `localStorage` hasta recargar; para probar un skin vía `localStorage`, recarga.
+- Distinguir colores entre sí: además de ratio de luminancia, uso ΔE (CIE76) ≥ ~30; rojo y magenta con ratio 1.0 pueden ser distinguibles por tono.
+- `references/` (y submódulos como `references/arkanoid/`) es intocable salvo `references/game-with-themes.md`.
 - Navegador compartido entre agentes: la página puede cambiar entre llamadas; agrupa teclas en un solo `evaluate` y comprueba la URL tras cada captura.
 
 ## Preferencias del usuario
