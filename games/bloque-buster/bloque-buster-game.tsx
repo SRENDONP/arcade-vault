@@ -25,8 +25,15 @@ import {
   type BloqueBusterState,
   type SoundEvent,
 } from "./core";
-import { readMuted, writeMuted } from "./prefs";
+import { readMuted, readSkin, writeMuted, writeSkin } from "./prefs";
 import { drawFrame } from "./render";
+import {
+  DEFAULT_SKIN,
+  getSkin,
+  isSkinName,
+  SKINS,
+  type SkinName,
+} from "./skins";
 
 // ---------------------------------------------------------------------------
 // Estado visible (React) y estado del bucle (refs)
@@ -120,6 +127,35 @@ function setMuted(muted: boolean) {
   muteListeners.forEach((l) => l());
 }
 
+// ---------------------------------------------------------------------------
+// Skin (av_bloque-buster_skin)
+// ---------------------------------------------------------------------------
+// Mismo patrón que el silencio (y que las preferencias de CAÍDA): DEFAULT_SKIN
+// como snapshot de servidor para que la hidratación coincida; readSkin() solo
+// en el cliente. El valor de esta sesión manda sobre localStorage.
+
+const skinListeners = new Set<() => void>();
+let sessionSkin: SkinName | null = null;
+
+function subscribeSkin(listener: () => void) {
+  skinListeners.add(listener);
+  window.addEventListener("storage", listener); // otras pestañas
+  return () => {
+    skinListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+const skinSnapshot = (): SkinName => sessionSkin ?? readSkin();
+const serverSkinSnapshot = (): SkinName => DEFAULT_SKIN;
+
+function setSkin(skin: SkinName) {
+  if (!isSkinName(skin)) return;
+  sessionSkin = skin;
+  writeSkin(skin);
+  skinListeners.forEach((l) => l());
+}
+
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // Tras un clic, el botón suelta el foco para que Espacio (lanzar) no lo vuelva a pulsar.
@@ -136,6 +172,11 @@ export function BloqueBusterGame({ game }: PlayableProps) {
     subscribeMuted,
     mutedSnapshot,
     serverMutedSnapshot,
+  );
+  const skin = useSyncExternalStore(
+    subscribeSkin,
+    skinSnapshot,
+    serverSkinSnapshot,
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -162,6 +203,8 @@ export function BloqueBusterGame({ game }: PlayableProps) {
   const soundsRef = useRef<Record<SoundEvent, HTMLAudioElement> | null>(null);
   // Copia de `muted` para el bucle.
   const mutedRef = useRef(muted);
+  // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
+  const skinRef = useRef(getSkin(skin));
 
   const goTo = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -192,8 +235,14 @@ export function BloqueBusterGame({ game }: PlayableProps) {
   const draw = useCallback(() => {
     const s = engineRef.current;
     const ctx = canvasRef.current?.getContext("2d");
-    if (s && ctx) drawFrame(ctx, s, performance.now());
+    if (s && ctx) drawFrame(ctx, s, performance.now(), skinRef.current);
   }, []);
+
+  // Al cambiar de skin se repinta (en pausa o fin el bucle no corre).
+  useEffect(() => {
+    skinRef.current = getSkin(skin);
+    draw();
+  }, [skin, draw]);
 
   // Reproduce y vacía los eventos de sonido del motor. Cada reproducción usa
   // un clon para que se solapen; los rechazos de autoplay se ignoran.
@@ -388,6 +437,15 @@ export function BloqueBusterGame({ game }: PlayableProps) {
     };
 
     const onKeyDown = (ev: KeyboardEvent) => {
+      // En el selector de skin las flechas (y Enter, Espacio, M) son del
+      // <select>: no mueven la pala ni cuentan como teclas pulsadas. P / Esc
+      // siguen abriendo y cerrando la pausa.
+      const t = ev.target;
+      if (
+        (t instanceof HTMLSelectElement || t instanceof HTMLInputElement) &&
+        !PAUSE_KEYS.has(ev.code)
+      )
+        return;
       pressed.add(ev.code);
       const ph = phaseRef.current;
 
@@ -469,7 +527,7 @@ export function BloqueBusterGame({ game }: PlayableProps) {
   const inRun = phase === "playing" || phase === "paused";
 
   return (
-    <div className="bloque-buster-root av-player fade-in">
+    <div className="bloque-buster-root av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div className="flex flex-wrap gap-6">
           <div className="hud-stat">
@@ -627,7 +685,10 @@ export function BloqueBusterGame({ game }: PlayableProps) {
         </div>
       </div>
 
-      <section className="bloque-buster-help" aria-label="Controles">
+      <section
+        className="bloque-buster-help bloque-buster-skin-row"
+        aria-label="Controles"
+      >
         <ControlsList />
         <button
           className={`btn ${muted ? "ghost" : ""} bloque-buster-sound`}
@@ -640,6 +701,26 @@ export function BloqueBusterGame({ game }: PlayableProps) {
           <span className="bloque-buster-led" aria-hidden="true" />
           SONIDO: {muted ? "NO" : "SÍ"}
         </button>
+        <div className="bloque-buster-skin">
+          <label className="bloque-buster-label" htmlFor="bloque-buster-skin">
+            Skin
+          </label>
+          <select
+            id="bloque-buster-skin"
+            className="bloque-buster-select"
+            value={skin}
+            onChange={(ev) => {
+              setSkin(ev.target.value as SkinName);
+              ev.currentTarget.blur(); // devuelve el teclado al juego
+            }}
+          >
+            {(Object.keys(SKINS) as SkinName[]).map((key) => (
+              <option key={key} value={key}>
+                {SKINS[key].label}
+              </option>
+            ))}
+          </select>
+        </div>
       </section>
 
       {phase === "over" && (

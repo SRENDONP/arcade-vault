@@ -8,12 +8,12 @@ Estándar: todo juego jugable tiene **Clásico** (por defecto, el look actual), 
 | ------------- | --------------- | ------- | ---- | ----- | --------------------- | ------- | -------------------------- | --------- | --------------- |
 | CAÍDA         | `caida`         | ✅      | ✅   | ✅    | `pastel`, `pixel`     | `clasico` | sí (peor 4.36 neón; claro 3.61) | cumple    | 2026-11-08      |
 | ROCAS         | `rocas`         | ✅      | ✅   | ✅    | —                     | `clasico` | sí (peor 5.15, powerUp clásico) | cumple    | 2026-11-08      |
-| BLOQUE BUSTER | `bloque-buster` | ❌      | ❌   | ❌    | —                     | —       | parcial (techo, "+3")      | no cumple | 2026-11-08      |
+| BLOQUE BUSTER | `bloque-buster` | ✅      | ✅   | ✅    | —                     | `clasico` | sí (peor 3.45, gris dañado clásico) | cumple    | 2026-11-08      |
 | SERPENTINA    | `serpentina`    | ✅      | ✅   | ✅    | —                     | `clasico` | sí (peor 3.49, cola neón)  | cumple    | 2026-11-08      |
 
 ## Pendientes
 
-1. **BLOQUE BUSTER** (`bloque-buster`) — crear `skins.ts` con `COLOR` + `BRICK_COLOR` + blanco de destello/texto; ampliar `prefs.ts` (hoy solo `av_bloque-buster_muted`) con `av_bloque-buster_skin`; selector, `data-skin`, CSS y guardia; corregir texto "+3" (blanco sobre naranja 2.39:1), techo (2.56:1) y gris dañado (2.93:1); separar mejor ladrillo `magenta` y `red` (1.08:1 entre sí).
+Ninguno: los cuatro juegos de `PLAYABLE` cumplen el estándar. Los juegos que se añadan a `PLAYABLE` entran aquí hasta tener sus tres skins.
 
 ## Historial
 
@@ -24,3 +24,4 @@ Estándar: todo juego jugable tiene **Clásico** (por defecto, el look actual), 
 - 2026-11-08 — rocas: implementado (skins clasico, neon, retro)
 - 2026-11-08 — caida: implementado (skins clasico [nuevo, defecto], neon [label Neón], retro; extras pastel y pixel conservados; fantasma con contorno ≥ 3:1; paleta clara para clasico/retro)
 - 2026-11-08 — serpentina: implementado (skins clasico, neon, retro)
+- 2026-11-08 — bloque-buster: implementado (skins clasico, neon, retro; clásico con techo, "+3", gris dañado y rojo corregidos)
