@@ -6,7 +6,9 @@
 .caida-root {
   --c-bg: #03030a;
   --c-text: var(--ink);
-  --c-label: var(--ink-faint);
+  /* --ink-faint (#4a4f70) se queda en 2.6:1 sobre el fondo; las etiquetas del
+     panel necesitan ≥ 4.5:1 → 4.8:1. */
+  --c-label: #737899;
   --c-muted: var(--ink-dim);
   --c-accent: var(--cyan);
   --c-accent-glow: rgba(0, 245, 255, 0.45);
@@ -31,7 +33,7 @@
   --c-muted: #3f4565;
   --c-accent: #0068a8;
   --c-accent-glow: rgba(0, 104, 168, 0.25);
-  --c-level: #8a6d00;
+  --c-level: #7a6000; /* 5.0:1 sobre #e8ebf6 */
   --board-bg: #ffffff;
   --board-border: #b9bfd6;
   --board-shadow: rgba(40, 50, 110, 0.16);
@@ -43,7 +45,9 @@
   --overlay-bg: rgba(232, 235, 246, 0.86);
 }
 
-/* Neon: fondo negro siempre, sea cual sea el tema (igual que la referencia).
+/* Clásico (defecto), Retro, Pastel y Pixel art usan las variables de arriba
+   (y las del tema claro); los colores de pieza salen de skins.ts.
+   Neón: fondo negro siempre, sea cual sea el tema (igual que la referencia).
    Va después del tema claro para ganarle con la misma especificidad. */
 .caida-root[data-skin="neon"] {
   --c-bg: #000000;

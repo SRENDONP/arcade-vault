@@ -3,13 +3,22 @@
 // está bloqueado el juego sigue funcionando y solo deja de persistir.
 
 import { clampStartLevel, MAX_START_LEVEL } from "./core";
-import { DEFAULT_SKIN, isSkinName, type SkinName } from "./skins";
+import {
+  DEFAULT_SKIN,
+  isSkinName,
+  type CaidaTheme,
+  type SkinName,
+} from "./skins";
 
-export const SKIN_KEY = "av_caida_skin"; // SkinName
+export type { CaidaTheme };
+
+// SkinName. Los valores guardados antes de añadir "clasico" (retro, neon,
+// pastel, pixel) siguen siendo válidos; solo quien no tenga ninguno pasa al
+// nuevo defecto.
+export const SKIN_KEY = "av_caida_skin";
 export const THEME_KEY = "av_caida_theme"; // "dark" | "light"
 export const START_LEVEL_KEY = "av_caida_start_level"; // "1".."10"
 
-export type CaidaTheme = "dark" | "light";
 export type CaidaPrefs = {
   skin: SkinName;
   theme: CaidaTheme;

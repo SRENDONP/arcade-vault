@@ -1,0 +1,10 @@
+[submodule "references/arkanoid"]
+	path = references/arkanoid
+	url = https://github.com/SRENDONP/arkanoid.git
+	branch = master
+	ignore = dirty
+[submodule "references/claude-tetris"]
+	path = references/claude-tetris
+	url = https://github.com/SRENDONP/claude-tetris.git
+	branch = main-3
+	ignore = dirty

@@ -4,11 +4,15 @@
 
 import { PIECE_DEFS, type PieceName } from "./core";
 
-export type SkinName = "retro" | "neon" | "pastel" | "pixel";
-export type DrawOpts = { shine: string; ghost?: boolean };
+export type SkinName = "clasico" | "neon" | "retro" | "pastel" | "pixel";
+export type CaidaTheme = "dark" | "light";
+export type DrawOpts = { shine: string };
+export type PiecePalette = Partial<Record<PieceName, string>>;
 export type Skin = {
   label: string;
-  palette: Partial<Record<PieceName, string>>; // las que falten usan COLORS de core
+  palette: PiecePalette; // las que falten usan COLORS de core
+  // Paleta para el tema claro (tablero blanco); si falta se usa `palette`.
+  light?: PiecePalette;
   draw(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -19,7 +23,24 @@ export type Skin = {
   ): void;
 };
 
-export const DEFAULT_SKIN: SkinName = "retro";
+export const DEFAULT_SKIN: SkinName = "clasico";
+
+// Colores de core oscurecidos para el tablero blanco del tema claro
+// (≥ 3.6:1 contra #ffffff). Los usan clasico y retro.
+const LIGHT_PALETTE: PiecePalette = {
+  I: "#36929d",
+  O: "#9e8431",
+  T: "#b867c6",
+  S: "#5e9160",
+  Z: "#ce6868",
+  J: "#638bac",
+  L: "#ad7c34",
+  PLUS: "#da5985",
+  U: "#7582c5",
+  Y: "#3e938b",
+  SINGLE: "#9e8500",
+  RING: "#998179",
+};
 
 // Mezcla un color #rrggbb con blanco (amount > 0) o negro (amount < 0).
 export function shade(hex: string, amount: number): string {
@@ -57,19 +78,27 @@ function roundRectPath(
 // draw(ctx, x, y, size, color, opts): (x, y) es la esquina en píxeles de la
 // celda. opts.shine es el brillo del tema actual (variable CSS).
 export const SKINS: Record<SkinName, Skin> = {
-  retro: {
-    label: "Retro",
+  // Por defecto: colores de core con un bisel plano (claro arriba/izquierda,
+  // oscuro abajo/derecha).
+  clasico: {
+    label: "Clásico",
     palette: {}, // colores de core
-    draw(ctx, x, y, s, color, opts) {
+    light: LIGHT_PALETTE,
+    draw(ctx, x, y, s, color) {
+      const b = Math.max(2, Math.round(s * 0.12));
       ctx.fillStyle = color;
       ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
-      ctx.fillStyle = opts.shine;
-      ctx.fillRect(x + 1, y + 1, s - 2, 4);
+      ctx.fillStyle = shade(color, 0.45);
+      ctx.fillRect(x + 1, y + 1, s - 2, b);
+      ctx.fillRect(x + 1, y + 1, b, s - 2);
+      ctx.fillStyle = shade(color, -0.4);
+      ctx.fillRect(x + 1, y + s - 1 - b, s - 2, b);
+      ctx.fillRect(x + s - 1 - b, y + 1 + b, b, s - 2 - b);
     },
   },
 
   neon: {
-    label: "Neon",
+    label: "Neón",
     palette: {
       I: "#00f0ff",
       O: "#fff200",
@@ -98,6 +127,19 @@ export const SKINS: Record<SkinName, Skin> = {
       ctx.fillStyle = shade(color, 0.6);
       ctx.fillRect(x + s * 0.4, y + s * 0.4, s * 0.2, s * 0.2);
       ctx.restore();
+    },
+  },
+
+  // El skin por defecto hasta añadir "clasico"; se mantiene tal cual.
+  retro: {
+    label: "Retro",
+    palette: {}, // colores de core
+    light: LIGHT_PALETTE,
+    draw(ctx, x, y, s, color, opts) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
+      ctx.fillStyle = opts.shine;
+      ctx.fillRect(x + 1, y + 1, s - 2, 4);
     },
   },
 
@@ -197,6 +239,29 @@ export function getSkin(name: unknown): Skin {
 }
 
 // Colores indexados por tipo de pieza (mismo formato que COLORS de core).
-export function colorsFor(skin: Skin): (string | null)[] {
-  return [null, ...PIECE_DEFS.map((d) => skin.palette[d.name] ?? d.color)];
+// En el tema claro usa la paleta `light` del skin si la tiene.
+export function colorsFor(skin: Skin, theme: CaidaTheme): (string | null)[] {
+  const palette = theme === "light" && skin.light ? skin.light : skin.palette;
+  return [null, ...PIECE_DEFS.map((d) => palette[d.name] ?? d.color)];
+}
+
+// Fantasma de la pieza (dónde caerá), igual en todos los skins: relleno muy
+// tenue y contorno opaco del color de la pieza, para que el contorno tenga el
+// mismo contraste que la pieza contra el fondo (≥ 3:1).
+export function drawGhost(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  color: string,
+): void {
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = color;
+  ctx.fillRect(x + 2, y + 2, s - 4, s - 4);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 3, y + 3, s - 6, s - 6);
+  ctx.restore();
 }
