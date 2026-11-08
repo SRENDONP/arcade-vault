@@ -96,7 +96,7 @@ Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`b
 - Game over goes through the shared `components/game-over-modal.tsx`, which saves with the Server Action `submitScore()` (`app/juegos/actions.ts`) — the single score path. Only games registered in `PLAYABLE` are ranked (`isRanked`); pass `ranked` to the modal (`true` for real games, `false` for the simulator).
 - With `cacheComponents`, leaving a route keeps it in a hidden `<Activity>`: React state survives, effects unmount and remount. Keep loop state in refs that are not reset on effect cleanup, and cancel `requestAnimationFrame` / listeners in every cleanup.
 
-`references/` holds the source material games and screens are ported from (`arkanoid`, `asteroids`, `claude-tetris`, `snake`, `home-about`, `templates`). It is read-only input: not compiled, linted or formatted, and nothing in `app/` imports from it.
+`references/` holds the source material games and screens are ported from (`arkanoid`, `asteroids`, `claude-tetris`, `snake`, `home-about`, `templates`). It is read-only input: not compiled, linted or formatted, and nothing in `app/` imports from it. Never edit files inside those folders — `.claude/settings.json` denies `Edit`/`Write` there; only the `.md` files at the root of `references/` (`game-suggestion-todo.md`, `game-with-themes.md`, `juegos-implementados.md`) are writable. `arkanoid` and `claude-tetris` are independent git repos registered as submodules (`.gitmodules`, `ignore = dirty`); after cloning run `git submodule update --init`.
 
 ## Agents
 

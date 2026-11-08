@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "deny": [
+      "Edit(references/arkanoid/**)",
+      "Edit(references/asteroids/**)",
+      "Edit(references/claude-tetris/**)",
+      "Edit(references/home-about/**)",
+      "Edit(references/snake/**)",
+      "Edit(references/templates/**)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
