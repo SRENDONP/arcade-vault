@@ -9,8 +9,10 @@ import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type MouseEvent,
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
@@ -27,7 +29,58 @@ import {
   type Dir,
   type SerpentinaState,
 } from "./core";
+import {
+  DEFAULT_PREFS,
+  readPrefs,
+  writePref,
+  type SerpentinaPrefs,
+} from "./prefs";
 import { drawFrame } from "./render";
+import { getSkin, SKINS, type SkinName } from "./skins";
+
+// ---------------------------------------------------------------------------
+// Preferencias (skin)
+// ---------------------------------------------------------------------------
+// Mismo patrón que games/caida/caida-game.tsx: useSyncExternalStore con
+// DEFAULT_PREFS como snapshot de servidor, así el render del servidor y el de
+// hidratación coinciden y readPrefs() solo se usa en el cliente tras montar.
+// Los cambios de esta sesión se guardan también en memoria: con localStorage
+// bloqueado se siguen aplicando y solo dejan de persistir.
+
+const prefListeners = new Set<() => void>();
+const sessionPrefs: Partial<SerpentinaPrefs> = {};
+
+function subscribePrefs(listener: () => void) {
+  prefListeners.add(listener);
+  window.addEventListener("storage", listener); // otras pestañas
+  return () => {
+    prefListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+// Snapshot como texto: estable entre llamadas mientras no cambie ningún valor.
+const prefsSnapshot = () => JSON.stringify({ ...readPrefs(), ...sessionPrefs });
+const SERVER_PREFS = JSON.stringify(DEFAULT_PREFS);
+const serverPrefsSnapshot = () => SERVER_PREFS;
+
+function setPref<K extends keyof SerpentinaPrefs>(
+  key: K,
+  value: SerpentinaPrefs[K],
+) {
+  sessionPrefs[key] = value;
+  writePref(key, value);
+  prefListeners.forEach((l) => l());
+}
+
+function usePrefs(): SerpentinaPrefs {
+  const raw = useSyncExternalStore(
+    subscribePrefs,
+    prefsSnapshot,
+    serverPrefsSnapshot,
+  );
+  return useMemo(() => JSON.parse(raw) as SerpentinaPrefs, [raw]);
+}
 
 // ---------------------------------------------------------------------------
 // Estado visible (React) y estado del bucle (refs)
@@ -90,6 +143,7 @@ export function SerpentinaGame({ game }: PlayableProps) {
   const [phase, setPhase] = useState<Phase>("start");
   const [pauseView, setPauseView] = useState<PauseView>("main");
   const [stats, setStats] = useState<RunStats>(INITIAL_STATS);
+  const { skin } = usePrefs();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -109,6 +163,8 @@ export function SerpentinaGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Direcciones pulsadas desde el último frame, en orden (cola de giros).
   const turnsRef = useRef<Dir[]>([]);
+  // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
+  const skinRef = useRef(getSkin(skin));
 
   const goTo = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -133,8 +189,14 @@ export function SerpentinaGame({ game }: PlayableProps) {
   const draw = useCallback(() => {
     const s = engineRef.current;
     const ctx = canvasRef.current?.getContext("2d");
-    if (s && ctx) drawFrame(ctx, s);
+    if (s && ctx) drawFrame(ctx, s, skinRef.current);
   }, []);
+
+  // Al cambiar de skin se repinta (en pausa o fin el bucle no corre).
+  useEffect(() => {
+    skinRef.current = getSkin(skin);
+    draw();
+  }, [skin, draw]);
 
   // Un giro pulsado antes de la pausa no se ejecuta al reanudar.
   const clearTurns = useCallback(() => {
@@ -288,6 +350,15 @@ export function SerpentinaGame({ game }: PlayableProps) {
     };
 
     const onKeyDown = (ev: KeyboardEvent) => {
+      // En el selector de skin las flechas (y Enter, Espacio) son del <select>:
+      // no giran la serpiente ni cuentan como teclas pulsadas. P / Esc siguen
+      // abriendo y cerrando la pausa.
+      const t = ev.target;
+      if (
+        (t instanceof HTMLSelectElement || t instanceof HTMLInputElement) &&
+        !PAUSE_KEYS.has(ev.code)
+      )
+        return;
       pressed.add(ev.code);
       const ph = phaseRef.current;
 
@@ -348,7 +419,7 @@ export function SerpentinaGame({ game }: PlayableProps) {
   const inRun = phase === "playing" || phase === "paused";
 
   return (
-    <div className="serpentina-root av-player fade-in">
+    <div className="serpentina-root av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div className="flex flex-wrap gap-6">
           <div className="hud-stat">
@@ -483,9 +554,31 @@ export function SerpentinaGame({ game }: PlayableProps) {
         </div>
       </div>
 
-      <section className="serpentina-help" aria-label="Controles">
-        <ControlsList />
-      </section>
+      <div className="serpentina-skin-row">
+        <section className="serpentina-help" aria-label="Controles">
+          <ControlsList />
+        </section>
+        <div className="serpentina-skin">
+          <label className="serpentina-label" htmlFor="serpentina-skin">
+            Skin
+          </label>
+          <select
+            id="serpentina-skin"
+            className="serpentina-select"
+            value={skin}
+            onChange={(ev) => {
+              setPref("skin", ev.target.value as SkinName);
+              ev.currentTarget.blur(); // devuelve el teclado al juego
+            }}
+          >
+            {(Object.keys(SKINS) as SkinName[]).map((key) => (
+              <option key={key} value={key}>
+                {SKINS[key].label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {phase === "over" && (
         <GameOverModal

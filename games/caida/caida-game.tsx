@@ -36,8 +36,10 @@ import {
 import { DEFAULT_PREFS, readPrefs, writePref, type CaidaPrefs } from "./prefs";
 import {
   colorsFor,
+  drawGhost,
   getSkin,
   SKINS,
+  type CaidaTheme,
   type DrawOpts,
   type Skin,
   type SkinName,
@@ -75,7 +77,6 @@ type Engine = {
 const BLOCK = 30; // px por celda del tablero (300×600)
 const NEXT_BLOCK = 30; // px por celda de la vista SIGUIENTE (120×120 = 4×4)
 const WALL_KICKS = [0, -1, 1, -2, 2];
-const GHOST_ALPHA = 0.2;
 
 // Teclas del juego: se les hace preventDefault para que la página no haga scroll.
 const GAME_KEYS = new Set([
@@ -214,12 +215,16 @@ type Look = {
   shine: string;
 };
 
-function readLook(root: HTMLElement | null, skinName: SkinName): Look {
+function readLook(
+  root: HTMLElement | null,
+  skinName: SkinName,
+  theme: CaidaTheme,
+): Look {
   const skin = getSkin(skinName);
   const css = root ? getComputedStyle(root) : null;
   return {
     skin,
-    colors: colorsFor(skin),
+    colors: colorsFor(skin, theme),
     grid: css?.getPropertyValue("--grid").trim() || "rgba(0, 245, 255, 0.07)",
     shine:
       css?.getPropertyValue("--block-shine").trim() ||
@@ -234,13 +239,12 @@ function drawBlock(
   cy: number,
   type: number,
   size: number,
-  opts: DrawOpts,
+  opts: DrawOpts | "ghost",
 ) {
   const color = look.colors[type];
   if (!type || !color) return;
-  ctx.globalAlpha = opts.ghost ? GHOST_ALPHA : 1;
-  look.skin.draw(ctx, cx * size, cy * size, size, color, opts);
-  ctx.globalAlpha = 1;
+  if (opts === "ghost") drawGhost(ctx, cx * size, cy * size, size, color);
+  else look.skin.draw(ctx, cx * size, cy * size, size, color, opts);
 }
 
 // Sin partida (pantalla de inicio) solo se dibuja la rejilla vacía.
@@ -274,10 +278,9 @@ function drawBoard(
   if (e.over) return;
   const { shape, x, y } = e.current;
   const gy = ghostY(e);
-  const ghost: DrawOpts = { shine: look.shine, ghost: true };
   for (let r = 0; r < shape.length; r++) {
     for (let c = 0; c < shape[r].length; c++)
-      drawBlock(ctx, look, x + c, gy + r, shape[r][c], BLOCK, ghost);
+      drawBlock(ctx, look, x + c, gy + r, shape[r][c], BLOCK, "ghost");
   }
   for (let r = 0; r < shape.length; r++) {
     for (let c = 0; c < shape[r].length; c++)
@@ -509,7 +512,7 @@ export function CaidaGame({ game }: PlayableProps) {
   // Skin y tema: relee colores y variables CSS del contenedor y repinta
   // (si el juego está en pausa o terminado, el bucle no lo hace).
   useEffect(() => {
-    lookRef.current = readLook(rootRef.current, skin);
+    lookRef.current = readLook(rootRef.current, skin, theme);
     draw();
   }, [skin, theme, draw]);
 
@@ -597,6 +600,13 @@ export function CaidaGame({ game }: PlayableProps) {
 
     const onKeyDown = (ev: KeyboardEvent) => {
       pressed.add(ev.code);
+
+      // En el selector de skin las flechas cambian la opción: no mueven la
+      // pieza, ni el foco del menú de pausa, ni Intro empieza la partida.
+      const t = ev.target;
+      if (t instanceof HTMLSelectElement || t instanceof HTMLInputElement)
+        return;
+
       const ph = phaseRef.current;
 
       if (ph === "start") {
@@ -611,11 +621,6 @@ export function CaidaGame({ game }: PlayableProps) {
         return;
       }
       if (ph !== "playing") return;
-
-      // En el selector de skin las flechas cambian la opción, no mueven la pieza.
-      const t = ev.target;
-      if (t instanceof HTMLSelectElement || t instanceof HTMLInputElement)
-        return;
 
       if (PAUSE_KEYS.has(ev.code)) {
         ev.preventDefault();

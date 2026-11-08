@@ -16,6 +16,50 @@
   --g-chrome: 380px;
 }
 
+/* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
+.serpentina-root[data-skin="neon"] {
+  --g-overlay-bg: rgba(0, 0, 0, 0.82);
+  --g-accent: #39ff14;
+  --g-accent-glow: rgba(57, 255, 20, 0.85);
+  --g-kbd-bg: #000a00;
+  --g-kbd-border: rgba(57, 255, 20, 0.5);
+}
+
+.serpentina-root[data-skin="neon"] .crt-screen {
+  background: #000000;
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.35);
+}
+
+.serpentina-root[data-skin="retro"] {
+  --g-overlay-bg: rgba(16, 16, 28, 0.88);
+  --g-accent: #a8e65a;
+  --g-accent-glow: transparent;
+  --g-kbd-bg: #10101c;
+  --g-kbd-border: #5ac54f;
+}
+
+.serpentina-root[data-skin="retro"] .crt-screen {
+  background: #10101c;
+}
+
+/* Retro: scanlines CRT más marcadas y sin desenfoque en los overlays. */
+.serpentina-root[data-skin="retro"] .crt-screen::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.42) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+.serpentina-root[data-skin="retro"] .serpentina-overlay {
+  backdrop-filter: none;
+}
+
+.serpentina-root[data-skin="retro"] .serpentina-select,
+.serpentina-root[data-skin="retro"] kbd {
+  border-radius: 0;
+}
+
 /* ---- Marco y canvas ---- */
 .serpentina-root .crt {
   width: 100%;
@@ -127,9 +171,44 @@
   line-height: 1.5;
 }
 
-/* Bajo el CRT, los controles van en una fila centrada. */
-.serpentina-help {
+/* Bajo el CRT, los controles y el selector de skin van en una fila centrada. */
+.serpentina-skin-row {
   margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 32px;
+}
+
+.serpentina-skin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.serpentina-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.serpentina-select {
+  height: 30px;
+  padding: 0 8px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.serpentina-select:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
 }
 
 .serpentina-help .serpentina-controls {
