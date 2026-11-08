@@ -87,7 +87,8 @@ Project `ehzxppntfcaqiobqmuub`, via `@supabase/ssr`. Env: `NEXT_PUBLIC_SUPABASE_
 
 Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`bloque-buster`), **SERPENTINA** (`serpentina`). The rest of the catalog (`gloton`, `invasores`, `ranaria`, `duelo-pixel`) still uses the simulator.
 
-- One folder per playable game: `games/<id>/`, where `<id>` is the game's `id` in `lib/games.ts`. Typical files: `core.ts` (logic), `render.ts` (canvas drawing), `<id>-game.tsx` (component), `<id>.css`, and optionally `prefs.ts` / `skins.ts`.
+- One folder per playable game: `games/<id>/`, where `<id>` is the game's `id` in `lib/games.ts`. Typical files: `core.ts` (logic), `render.ts` (canvas drawing), `<id>-game.tsx` (component), `<id>.css`, `skins.ts` + `prefs.ts`.
+- Every playable game ships at least three skins — `clasico` (default), `neon`, `retro` — each readable on a dark background, with the choice stored in `av_<id>_skin` (contract §7 in `.claude/skills/nuevo-juego/integracion.md`; pattern in `games/caida/`). The `skin-designer` agent audits and implements this.
 - Register the playable component in `games/index.ts` (`PLAYABLE` / `getPlayable`). `app/juegos/[id]/jugar/page.tsx` renders `getPlayable(id) ?? GamePlayer`; games without an entry keep the simulated `components/game-player.tsx`.
 - `core.ts` holds the game's pure logic: no React, DOM, `window` or `localStorage`.
 - `localStorage` keys of a game use the prefix `av_<id>_` (e.g. `av_caida_skin`). A run in progress is not persisted.
@@ -104,6 +105,9 @@ Project subagents live in `.claude/agents/` (one `.md` per agent, with frontmatt
 - `game-planner` (`.claude/agents/game-planner.md`; tools `Read, Glob, Grep, Write, Edit`; `model: inherit`; `memory: project`) — plans and decides which game fits the platform next. It reads the catalog (`lib/games.ts`), `PLAYABLE` (`games/index.ts`), `references/` and the integration contract (`.claude/skills/nuevo-juego/integracion.md`), and proposes 1–3 candidates with a final recommendation. It does not write code or specs. It keeps a persistent memory of past suggestions (proposed / chosen / discarded / implemented) in `.claude/agent-memory/game-planner/` (`MEMORY.md` + `sugerencias.md`), committed to git, and keeps the checklist `references/game-suggestion-todo.md` in sync — the only file it may write outside its memory.
   - Flow for a new game: `game-planner` (pick the game) → `/nuevo-juego` (write its spec) → `/spec-impl` (implement it on `spec-NN-<name>`).
   - Use it when asked "qué juego sigue", for game ideas, or to review earlier suggestions.
+- `skin-designer` (`.claude/agents/skin-designer.md`; tools `Read, Glob, Grep, Write, Edit, Bash` + Playwright MCP; `model: inherit`; `memory: project`) — makes every game in `PLAYABLE` have at least the skins Clásico (default, the game's current look), Neón and Retro, each passing dark-background contrast (≥ 3:1 for game elements, ≥ 4.5:1 for text). **Audit mode** (default) reports per game what is missing without editing; **implementation mode** (`implementa <id>`, one game per run) writes `skins.ts`, `prefs.ts` (`av_<id>_skin`), the selector, `data-skin` CSS and a skin-aware `render.ts`, then runs lint/build and checks each skin in the browser. It only writes in `games/<id>/` (never `core.ts`) and its memory `.claude/agent-memory/skin-designer/` (`MEMORY.md` + `auditoria.md`, committed to git). It does not commit.
+  - Flow: audit → `implementa <id>` → review in the browser → PR on branch `skins-<id>`.
+  - Use it when asked to review, add or adjust skins or visual themes of the games.
 
 ## Skills
 

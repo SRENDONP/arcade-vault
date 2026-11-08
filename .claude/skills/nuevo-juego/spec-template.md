@@ -38,6 +38,7 @@ El nombre visible es "<TÍTULO>"; <la marca "<Original>" no aparece en la UI>.
 - Menú de pausa (P / Esc o PAUSA): Reanudar, Reiniciar y Ver controles / Volver. Con el menú abierto el juego no recibe teclas, y las que sigan pulsadas al reanudar se ignoran hasta soltarlas. Perder el foco con partida en curso abre la pausa.
 - Fin de partida (<condición> o botón FIN) con `GameOverModal` (`ranked`), `extra` = <datos>, y `onRestart` que empieza una partida nueva.
 - Guardado en Supabase por la vía existente (`submitScore` → `submit_score`); el ranking aparece en `/juegos/<id>` y `/salon?juego=<id>`.
+- Skins en `games/<id>/skins.ts` (§7 de `integracion.md`): Clásico (por defecto), Neón y Retro, con su paleta <qué elemento en qué color en cada skin>, preferencia `av_<id>_skin`, selector y contraste verificado en oscuro.
 - Estilos en `games/<id>/<id>.css`, con todas las reglas bajo `.<id>-root`.
 - <Ajuste del texto `long` si las reglas no coinciden con el catálogo.>
 
@@ -46,7 +47,7 @@ El nombre visible es "<TÍTULO>"; <la marca "<Original>" no aparece en la UI>.
 - Controles táctiles o gestos en móvil.
 - Sonido y música.
 - Guardar datos extra de la partida (<datos de `extra`>) en Supabase.
-- <Preferencias en `localStorage` / skins / tema, si no se piden.>
+- <Preferencias en `localStorage` distintas del skin / skins extra / tema claro, si no se piden.>
 - <Mecánicas de la referencia o del género que se dejan fuera.>
 - Cambios de balance respecto a la referencia.
 - Otros juegos del catálogo.
