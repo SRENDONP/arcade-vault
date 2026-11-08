@@ -5,8 +5,10 @@ import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type MouseEvent,
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
@@ -22,7 +24,50 @@ import {
   type RocasInput,
   type RocasState,
 } from "./core";
+import { DEFAULT_PREFS, readPrefs, writePref, type RocasPrefs } from "./prefs";
 import { drawFrame } from "./render";
+import { getSkin, SKINS, type SkinName } from "./skins";
+
+// ---------------------------------------------------------------------------
+// Preferencias (skin)
+// ---------------------------------------------------------------------------
+// Mismo patrón que games/caida/caida-game.tsx: useSyncExternalStore con
+// DEFAULT_PREFS como snapshot de servidor, así el render del servidor y el de
+// hidratación coinciden y readPrefs() solo se usa en el cliente tras montar.
+// Los cambios de esta sesión se guardan también en memoria: con localStorage
+// bloqueado se siguen aplicando y solo dejan de persistir.
+
+const prefListeners = new Set<() => void>();
+const sessionPrefs: Partial<RocasPrefs> = {};
+
+function subscribePrefs(listener: () => void) {
+  prefListeners.add(listener);
+  window.addEventListener("storage", listener); // otras pestañas
+  return () => {
+    prefListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+// Snapshot como texto: estable entre llamadas mientras no cambie ningún valor.
+const prefsSnapshot = () => JSON.stringify({ ...readPrefs(), ...sessionPrefs });
+const SERVER_PREFS = JSON.stringify(DEFAULT_PREFS);
+const serverPrefsSnapshot = () => SERVER_PREFS;
+
+function setPref<K extends keyof RocasPrefs>(key: K, value: RocasPrefs[K]) {
+  sessionPrefs[key] = value;
+  writePref(key, value);
+  prefListeners.forEach((l) => l());
+}
+
+function usePrefs(): RocasPrefs {
+  const raw = useSyncExternalStore(
+    subscribePrefs,
+    prefsSnapshot,
+    serverPrefsSnapshot,
+  );
+  return useMemo(() => JSON.parse(raw) as RocasPrefs, [raw]);
+}
 
 // ---------------------------------------------------------------------------
 // Estado visible (React) y estado del bucle (refs)
@@ -80,6 +125,7 @@ export function RocasGame({ game }: PlayableProps) {
   const [phase, setPhase] = useState<Phase>("start");
   const [pauseView, setPauseView] = useState<PauseView>("main");
   const [stats, setStats] = useState<RunStats>(INITIAL_STATS);
+  const { skin } = usePrefs();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -99,6 +145,8 @@ export function RocasGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Disparo pendiente para el próximo frame (una bala por pulsación).
   const fireRef = useRef(false);
+  // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
+  const skinRef = useRef(getSkin(skin));
 
   const goTo = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -123,8 +171,14 @@ export function RocasGame({ game }: PlayableProps) {
   const draw = useCallback(() => {
     const s = engineRef.current;
     const ctx = canvasRef.current?.getContext("2d");
-    if (s && ctx) drawFrame(ctx, s, performance.now());
+    if (s && ctx) drawFrame(ctx, s, performance.now(), skinRef.current);
   }, []);
+
+  // Al cambiar de skin se repinta (en pausa o fin el bucle no corre).
+  useEffect(() => {
+    skinRef.current = getSkin(skin);
+    draw();
+  }, [skin, draw]);
 
   const pause = useCallback(() => {
     if (phaseRef.current !== "playing") return;
@@ -280,6 +334,15 @@ export function RocasGame({ game }: PlayableProps) {
     };
 
     const onKeyDown = (ev: KeyboardEvent) => {
+      // En el selector de skin las flechas (y Enter, Espacio) son del <select>:
+      // no mueven la nave ni cuentan como teclas mantenidas. P / Esc siguen
+      // abriendo y cerrando la pausa.
+      const t = ev.target;
+      if (
+        (t instanceof HTMLSelectElement || t instanceof HTMLInputElement) &&
+        !PAUSE_KEYS.has(ev.code)
+      )
+        return;
       pressed.add(ev.code);
       const ph = phaseRef.current;
 
@@ -339,7 +402,7 @@ export function RocasGame({ game }: PlayableProps) {
   const inRun = phase === "playing" || phase === "paused";
 
   return (
-    <div className="rocas-root av-player fade-in">
+    <div className="rocas-root av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div className="flex flex-wrap gap-6">
           <div className="hud-stat">
@@ -470,9 +533,31 @@ export function RocasGame({ game }: PlayableProps) {
         </div>
       </div>
 
-      <section className="rocas-help" aria-label="Controles">
-        <ControlsList />
-      </section>
+      <div className="rocas-skin-row">
+        <section className="rocas-help" aria-label="Controles">
+          <ControlsList />
+        </section>
+        <div className="rocas-skin">
+          <label className="rocas-label" htmlFor="rocas-skin">
+            Skin
+          </label>
+          <select
+            id="rocas-skin"
+            className="rocas-select"
+            value={skin}
+            onChange={(ev) => {
+              setPref("skin", ev.target.value as SkinName);
+              ev.currentTarget.blur(); // devuelve el teclado al juego
+            }}
+          >
+            {(Object.keys(SKINS) as SkinName[]).map((key) => (
+              <option key={key} value={key}>
+                {SKINS[key].label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {phase === "over" && (
         <GameOverModal

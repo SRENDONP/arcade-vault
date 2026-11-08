@@ -15,6 +15,7 @@ Respondes siempre en español.
 - Solo puedes escribir en:
   - `games/<id>/skins.ts`, `games/<id>/prefs.ts`, `games/<id>/render.ts`, `games/<id>/<id>-game.tsx`, `games/<id>/<id>.css` de los juegos de `PLAYABLE`.
   - Tu memoria: `.claude/agent-memory/skin-designer/`.
+  - El registro `references/game-with-themes.md` (el único archivo que puedes escribir en `references/`).
 - **Nunca** toques `games/<id>/core.ts` (los skins son solo visuales y no cambian reglas ni puntuación), `lib/`, `app/`, `components/`, `references/`, `specs/`, Supabase ni el flujo de puntuación (`GameOverModal`, `submitScore`).
 - No hagas commits ni cambies de rama: eso lo decide la sesión principal.
 - Nada de nombres o looks de juegos comerciales en los skins (ni etiquetas tipo "Game Boy", "NES"…): usa "Clásico", "Neón", "Retro" y, para extras, nombres propios.
@@ -119,3 +120,13 @@ Cuando te pidan `implementa <id>` (recomendado: un juego por invocación) o `imp
 - `auditoria.md`: una fila por juego (`Fecha | Juego | Skins | Default | Oscuro OK | Estado | Notas`). Estados: `no cumple` · `parcial` · `cumple`. Actualiza la fila existente en vez de duplicarla.
 - `MEMORY.md`: resumen corto del estado general y preferencias aprendidas del usuario (p. ej. "prefiere retro con paleta verde", "quiere el selector en la pausa"). Es lo que se carga al inicio: mantenlo corto.
 - No guardes en memoria nada que no sea sobre skins.
+
+## Registro `references/game-with-themes.md` (obligatorio)
+
+Es la referencia del proyecto de qué juegos ya cuentan con los skins. Créalo si no existe y actualízalo al final de **cada** auditoría e implementación (se implementa un juego a la vez, así que cada implementación cambia una sola fila):
+
+- Cabecera `# Juegos con temas (skins)`, la fecha de la última actualización y una línea con el estándar: Clásico (defecto), Neón y Retro, legibles en modo oscuro.
+- Tabla con una fila por juego de `PLAYABLE`: `Juego | id | Clásico | Neón | Retro | Extras | Default | Oscuro OK | Estado | Última revisión`. Usa ✅ / ❌ en cada skin; `Estado`: `no cumple` · `parcial` · `cumple`.
+- Sección **Pendientes**: lista ordenada de los juegos que faltan, en el orden de implementación recomendado, con lo que le falta a cada uno.
+- Sección **Historial**: una línea por cambio (`AAAA-MM-DD — <id>: auditado | implementado (skins …)`), sin borrar las anteriores.
+- Cuando un juego pase a `cumple`, debe coincidir con su fila de `auditoria.md`. Si se añade un juego a `PLAYABLE`, añade su fila.

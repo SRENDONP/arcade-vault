@@ -11,7 +11,10 @@ Diseñador de skins de Arcade Vault. Estado por juego en [auditoria.md](auditori
 
 ## Estado general
 
-- (sin auditoría todavía)
+- 2026-11-08, primera auditoría: CAÍDA `parcial` (falta `clasico`); ROCAS, BLOQUE BUSTER y SERPENTINA `no cumple` (sin skins).
+- 2026-11-08: ROCAS `cumple` (implementado a petición del usuario, saltándose el orden). Pendientes: caida → serpentina → bloque-buster.
+- Ojo en juegos con teclas mantenidas (`pressedRef` leído por el bucle, p. ej. ROCAS): la guardia del `<select>` va antes de `pressed.add`, no después de las fases como en CAÍDA; si no, ↑ en el selector propulsa.
+- Registro público del estado en `references/game-with-themes.md` (actualizar tras cada auditoría/implementación).
 
 ## Preferencias del usuario
 
