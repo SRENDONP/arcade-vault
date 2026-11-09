@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
-import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import {
+  Courier_Prime,
+  JetBrains_Mono,
+  Press_Start_2P,
+} from "next/font/google";
 import { Suspense } from "react";
 import { Footer } from "@/components/footer";
 import { Nav, NavBar } from "@/components/nav";
@@ -27,6 +31,13 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: "Arcade Vault · Portal Retro",
   description: "Juega y compite por la puntuación más alta.",
+};
+
+// Ancho de dispositivo y área segura (notch) en móviles; el zoom no se bloquea.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

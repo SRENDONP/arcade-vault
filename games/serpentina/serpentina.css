@@ -14,6 +14,8 @@
   /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
      estrecha para que el campo cuadrado quepa entero en pantallas bajas. */
   --g-chrome: 380px;
+  /* Proporción del campo para el layout móvil compartido (SPEC 11). */
+  --crt-ar: 1;
 }
 
 /* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
@@ -219,29 +221,13 @@
   font-size: 12px;
 }
 
-/* ---- Móvil ---- */
-@media (max-width: 640px) {
-  .serpentina-root.av-player {
-    padding-inline: 16px;
-  }
-  .serpentina-root .crt {
-    padding: 12px;
-    border-radius: 18px;
-  }
-  /* En móvil la barra del CRT solo deja el LED y el nivel. */
-  .serpentina-root .crt-bottom > span:nth-child(2) {
-    display: none;
-  }
-  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
-  .serpentina-root .hud-actions {
-    width: 100%;
-  }
-  .serpentina-root .hud-actions > .btn {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 6px;
-    font-size: 9px;
-    letter-spacing: 0.08em;
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD, marco y tamaño del CRT vienen del layout compartido de app/globals.css
+   (SPEC 11); aquí solo los ajustes propios del juego. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  .serpentina-select {
+    height: var(--tap-min);
   }
   .serpentina-overlay {
     gap: 10px;

@@ -420,6 +420,9 @@ export function __Pascal__Game({ game }: PlayableProps) {
               <p className="__id__-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
+              <p className="touch-notice">
+                Controles táctiles próximamente · necesitas un teclado
+              </p>
             </div>
           )}
 

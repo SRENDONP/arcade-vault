@@ -31,6 +31,9 @@
   --line-2: rgba(255, 255, 255, 0.06);
   --pixel: "Press Start 2P", system-ui, monospace;
   --mono: "JetBrains Mono", "Courier Prime", "Courier New", monospace;
+  /* Layout móvil (SPEC 11) */
+  --player-reserve: 0px; /* alto reservado bajo el CRT; el spec táctil lo sube */
+  --tap-min: 44px; /* tamaño mínimo de un objetivo táctil */
 }
 
 /* Expose the palette and fonts as Tailwind utilities (bg-bg-2, text-cyan, font-pixel, ...) */
@@ -69,7 +72,7 @@
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: 0.01em;
-    overflow-x: hidden;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -208,10 +211,12 @@
   .av-nav .auth-btn { margin-left: 16px; }
   .av-nav .hamburger { display: none; }
 
-  @media (max-width: 840px) {
+  @media (max-width: 840px), (orientation: landscape) and (max-height: 500px) {
     .av-nav { padding: 12px 16px; }
     .av-nav .links { display: none; }
     .av-nav .coin-counter { display: none; }
+    /* En móvil auth vive en el panel lateral: la barra queda logo + hamburguesa. */
+    .av-nav .auth-btn { display: none; }
     .av-nav .hamburger { display: inline-flex; }
   }
 
@@ -224,10 +229,13 @@
     z-index: 60;
     padding: 24px 20px;
     transform: translateX(100%);
-    transition: transform 220ms ease;
+    /* Cerrado: invisible y fuera del flujo de scroll; visibility espera a que
+       termine el deslizamiento para no cortar la animación de cierre. */
+    visibility: hidden;
+    transition: transform 220ms ease, visibility 0s linear 220ms;
     display: flex; flex-direction: column; gap: 8px;
   }
-  .av-mobile-panel.open { transform: translateX(0); }
+  .av-mobile-panel.open { transform: translateX(0); visibility: visible; transition: transform 220ms ease, visibility 0s; }
   .av-mobile-panel a {
     padding: 14px 12px;
     font-family: var(--pixel);
@@ -355,6 +363,44 @@
   }
   .chip.active { color: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 10px rgba(255,0,110,0.35); }
   .chip:hover:not(.active) { color: var(--ink); }
+
+  /* ===== aviso táctil (SPEC 11) =====
+     Solo en dispositivos cuyo único puntero es táctil (sin ratón ni trackpad).
+     Puro CSS: sin detección en JS ni parpadeo al hidratar. */
+  .touch-notice { display: none; }
+  @media (pointer: coarse) and (not (any-pointer: fine)) {
+    .touch-notice {
+      display: block;
+      max-width: 260px;
+      margin: 0;
+      padding: 6px 10px;
+      border: 1px dashed var(--yellow);
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.4;
+      letter-spacing: 0.04em;
+      text-align: center;
+      color: var(--yellow);
+      background: rgba(10, 10, 15, 0.7);
+    }
+  }
+
+  /* ===== objetivos táctiles (< 840 px y móvil en horizontal) =====
+     Mínimo de --tap-min sin agrandar la tipografía pixel: solo crece la caja. */
+  @media (max-width: 840px), (orientation: landscape) and (max-height: 500px) {
+    .btn,
+    .chip,
+    .av-nav .hamburger {
+      min-height: var(--tap-min);
+      min-width: var(--tap-min);
+    }
+    .chip { display: inline-flex; align-items: center; justify-content: center; }
+    .av-mobile-panel a {
+      display: flex;
+      align-items: center;
+      min-height: var(--tap-min);
+    }
+  }
 
   /* ===== grid + cards ===== */
   .av-grid {
@@ -557,6 +603,8 @@
     padding: 0 32px;
   }
   @media (max-width: 900px) { .av-detail { grid-template-columns: 1fr; } }
+  /* Columnas de grid que pueden encogerse por debajo de su contenido mínimo. */
+  .av-detail > *, .activity-grid > * { min-width: 0; }
   .detail-cover {
     aspect-ratio: 16 / 10;
     position: relative;
@@ -586,6 +634,12 @@
   .stat-strip > div { padding: 14px; background: var(--bg-2); }
   .stat-strip .l { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.12em; }
   .stat-strip .v { font-family: var(--pixel); font-size: 16px; color: var(--cyan); margin-top: 6px; text-shadow: 0 0 6px rgba(0,245,255,0.5); }
+  /* Móvil estrecho: la tira de stats encoge sin desbordar (las estrellas pueden partir línea). */
+  @media (max-width: 520px) {
+    .stat-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat-strip > div { padding: 12px 10px; }
+    .stat-strip .v { font-size: 12px; }
+  }
   .detail-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
 
   .leaderboard {
@@ -808,6 +862,15 @@
     font-family: var(--mono);
   }
   .modal .input-row input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,245,255,0.35); }
+  /* El input no debe imponer su ancho intrínseco a la fila (desbordaba a 360 px). */
+  .modal .input-row input { min-width: 0; }
+  /* Móvil estrecho: menos marco y la fila de guardado apilada (input arriba, botón abajo). */
+  @media (max-width: 520px) {
+    .modal { padding: 22px 16px; }
+    .modal h2 { font-size: 18px; }
+    .modal .input-row { flex-direction: column; }
+    .modal .input-row input { flex: 0 0 auto; } /* flex: 1 encogía su alto en columna */
+  }
   .modal .actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
   .toast-saved {
     font-family: var(--pixel);
@@ -917,7 +980,8 @@
     margin-bottom: 24px;
     align-items: end;
   }
-  @media (max-width: 720px) { .podium { grid-template-columns: 1fr; } }
+  /* En una columna el campeón va primero: 01 → 02 → 03. */
+  @media (max-width: 720px) { .podium { grid-template-columns: 1fr; } .podium-slot.gold { order: -1; } }
   .podium-slot {
     position: relative;
     border: 1px solid var(--line);
@@ -985,6 +1049,13 @@
     .av-hall { padding: 0 16px; }
     .av-detail { padding: 0 16px; margin: 24px auto; }
     .av-player { padding: 0 16px 32px; }
+  }
+  /* Móvil estrecho: sin columna de fecha; rango, jugador y puntuación. */
+  @media (max-width: 520px) {
+    .hall-table .th, .hall-table .tr { grid-template-columns: 56px minmax(0, 1fr) auto; }
+    .hall-table .th { font-size: 8px; letter-spacing: 0.08em; }
+    .hall-table .th > :nth-child(4), .hall-table .tr .dt { display: none; }
+    .hall-table .tr .pl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   }
 
   /* ===== HOME PAGE ===== */
@@ -1101,6 +1172,12 @@
   @media (max-width: 720px) { .stats-inner { grid-template-columns: 1fr; } }
   .stat-block { text-align: center; padding: 20px; border-left: 1px solid var(--line); }
   .stat-block:first-child { border-left: 0; }
+  /* Tablet: tres columnas estrechas; la cifra pixel se ajusta al ancho para no cortarse. */
+  @media (min-width: 721px) and (max-width: 1100px) {
+    .stats-inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat-block { padding: 20px 8px; }
+    .stats-inner .stat-n { font-size: 3.4vw; }
+  }
   @media (max-width: 720px) { .stat-block { border-left: 0; border-top: 1px solid var(--line); } .stat-block:first-child { border-top: 0; } }
   .stat-n { font-family: var(--pixel); font-size: clamp(32px, 5vw, 56px); letter-spacing: 0.04em; }
   .stat-u { font-size: 13px; letter-spacing: 0.18em; margin-top: 10px; color: var(--ink); }
@@ -1235,7 +1312,7 @@
   .tk-mid { color: var(--ink-dim); font-size: 12px; }
   .tk-s { font-family: var(--pixel); font-size: 11px; color: var(--yellow); text-shadow: 0 0 6px rgba(245,255,0,0.5); }
   .tk-t { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.08em; }
-  @media (max-width: 520px) { .tick-row { grid-template-columns: 1fr auto; row-gap: 4px; } .tk-mid, .tk-t { grid-column: 1 / -1; } }
+  @media (max-width: 520px) { .tick-row { grid-template-columns: 1fr auto; row-gap: 4px; } .tk-mid, .tk-t { grid-column: 1 / -1; } .tk-s { grid-row: 1; grid-column: 2; } }
 
   .top-list { padding: 10px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
   .top-row {
@@ -1334,4 +1411,110 @@
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   }
   @keyframes spinpix { to { transform: rotate(360deg); } }
+}
+
+/* ===== Reproductor responsive (SPEC 11) =====
+   Fuera de @layer a propósito: debe ganar a las utilidades de Tailwind del JSX
+   (flex-wrap, gap-6) del HUD. Los juegos (games/<id>/<id>.css) se cargan después
+   y pueden ajustar estas variables:
+     --crt-ar          proporción ancho/alto de .crt-screen (4:3 por defecto)
+     --crt-pad         padding del marco .crt
+     --player-chrome   alto que ocupan nav, HUD, márgenes y barra del CRT
+   El ancho máximo del CRT sale del alto disponible:
+     (100dvh − chrome − --player-reserve) × proporción + marco
+   así el HUD y la pantalla completa caben a la vez en el viewport. */
+.av-player {
+  --crt-ar: 1.3333;
+  --crt-pad: 24px;
+}
+
+/* Móvil y tablet en vertical: HUD compacto en dos filas (stats / botones). */
+@media (max-width: 840px) and (orientation: portrait) {
+  .av-player {
+    --nav-h: 69px; /* .av-nav móvil: 44px de hamburguesa + 2×12px + borde */
+    --hud-h: 104px;
+    --crt-pad: 10px;
+    --player-chrome: calc(var(--nav-h) + 12px + var(--hud-h) + 10px + 2 * var(--crt-pad) + 26px + 8px);
+    margin: 12px auto;
+    padding: 0 16px 24px;
+  }
+  .av-player .player-hud {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+  /* Fila 1: stats en una sola línea; la etiqueta «Jugador» se oculta. */
+  .av-player .player-hud > div:first-child {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .av-player .player-hud > div:first-child > .hud-stat:first-child { display: none; }
+  .av-player .hud-stat { gap: 2px; min-width: 0; }
+  .av-player .hud-stat .l { font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+  .av-player .hud-stat .v { font-size: 12px; white-space: nowrap; }
+  /* Fila 2: los botones reparten el ancho. */
+  .av-player .hud-actions { width: 100%; gap: 8px; }
+  .av-player .hud-actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .av-player .crt { border-radius: 18px; }
+  .av-player .crt-bottom { margin-top: 8px; }
+  .av-player .crt-bottom > span:not(.led) { display: none; }
+}
+
+/* Móvil en horizontal: HUD en columna a la izquierda del CRT. La nav deja de
+   ser fija para que, al hacer scroll hasta el juego, todo el alto sea suyo. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .av-nav { position: relative; }
+  .av-player {
+    --crt-pad: 8px;
+    --player-chrome: calc(8px + 2 * var(--crt-pad) + 8px);
+    display: grid;
+    grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+    max-width: none;
+    margin: 8px auto;
+    padding: 0 16px 16px;
+  }
+  .av-player > * { grid-column: 2; }
+  .av-player > .player-hud {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px;
+    margin: 0;
+  }
+  .av-player .player-hud > div:first-child { flex-direction: column; flex-wrap: nowrap; gap: 6px; }
+  .av-player .player-hud > div:first-child > .hud-stat:first-child { display: none; }
+  .av-player .hud-stat { gap: 2px; min-width: 0; }
+  .av-player .hud-stat .l { font-size: 9px; letter-spacing: 0.1em; }
+  .av-player .hud-stat .v { font-size: 12px; white-space: nowrap; }
+  .av-player .hud-actions { flex-direction: column; gap: 6px; }
+  .av-player .hud-actions > .btn { padding-inline: 6px; font-size: 9px; letter-spacing: 0.08em; }
+  .av-player .crt { border-radius: 16px; }
+  .av-player .crt-bottom { display: none; }
+}
+
+/* `body` sube la especificidad para ganar al max-width de escritorio que cada
+   juego define en .<id>-root .crt (su CSS se carga después). */
+@media (max-width: 840px) and (orientation: portrait), (orientation: landscape) and (max-height: 500px) {
+  body .av-player .crt {
+    width: 100%;
+    padding: var(--crt-pad);
+    max-width: calc((100dvh - var(--player-chrome) - var(--player-reserve)) * var(--crt-ar) + 2 * var(--crt-pad));
+    margin-inline: auto;
+  }
 }

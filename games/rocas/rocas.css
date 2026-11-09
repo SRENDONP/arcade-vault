@@ -212,29 +212,13 @@
   font-size: 12px;
 }
 
-/* ---- Móvil ---- */
-@media (max-width: 640px) {
-  .rocas-root.av-player {
-    padding-inline: 16px;
-  }
-  .rocas-root .crt {
-    padding: 12px;
-    border-radius: 18px;
-  }
-  /* En móvil la barra del CRT solo deja el LED y el nivel. */
-  .rocas-root .crt-bottom > span:nth-child(2) {
-    display: none;
-  }
-  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
-  .rocas-root .hud-actions {
-    width: 100%;
-  }
-  .rocas-root .hud-actions > .btn {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 6px;
-    font-size: 9px;
-    letter-spacing: 0.08em;
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD, marco y tamaño del CRT vienen del layout compartido de app/globals.css
+   (SPEC 11); aquí solo la proporción del campo y los ajustes propios. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  .rocas-select {
+    height: var(--tap-min);
   }
   .rocas-overlay {
     gap: 10px;

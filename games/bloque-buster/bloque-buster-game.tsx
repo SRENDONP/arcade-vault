@@ -612,6 +612,9 @@ export function BloqueBusterGame({ game }: PlayableProps) {
               <p className="bloque-buster-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
+              <p className="touch-notice">
+                Controles táctiles próximamente · necesitas un teclado
+              </p>
             </div>
           )}
 

@@ -501,6 +501,9 @@ export function DueloPixelGame({ game }: PlayableProps) {
               <p className="duelo-pixel-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
+              <p className="touch-notice">
+                Controles táctiles próximamente · necesitas un teclado
+              </p>
             </div>
           )}
 
