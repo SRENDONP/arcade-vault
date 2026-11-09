@@ -482,6 +482,9 @@ export function RocasGame({ game }: PlayableProps) {
               <p className="rocas-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
+              <p className="touch-notice">
+                Controles táctiles próximamente · necesitas un teclado
+              </p>
             </div>
           )}
 

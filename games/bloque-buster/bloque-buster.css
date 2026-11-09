@@ -13,6 +13,8 @@
   /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
      estrecha para que el campo 3:4 quepa entero en pantallas bajas. */
   --g-chrome: 380px;
+  /* Proporción del campo para el layout móvil compartido (SPEC 11). */
+  --crt-ar: 0.75;
 }
 
 /* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
@@ -265,29 +267,13 @@
   pointer-events: auto;
 }
 
-/* ---- Móvil ---- */
-@media (max-width: 640px) {
-  .bloque-buster-root.av-player {
-    padding-inline: 16px;
-  }
-  .bloque-buster-root .crt {
-    padding: 12px;
-    border-radius: 18px;
-  }
-  /* En móvil la barra del CRT solo deja el LED y el nivel. */
-  .bloque-buster-root .crt-bottom > span:nth-child(2) {
-    display: none;
-  }
-  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
-  .bloque-buster-root .hud-actions {
-    width: 100%;
-  }
-  .bloque-buster-root .hud-actions > .btn {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 6px;
-    font-size: 9px;
-    letter-spacing: 0.08em;
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD, marco y tamaño del CRT vienen del layout compartido de app/globals.css
+   (SPEC 11); aquí solo los ajustes propios del juego. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  .bloque-buster-select {
+    height: var(--tap-min);
   }
   .bloque-buster-overlay {
     gap: 10px;

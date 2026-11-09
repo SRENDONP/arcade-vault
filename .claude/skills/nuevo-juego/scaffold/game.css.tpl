@@ -13,6 +13,9 @@
   /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
      estrecha para que el campo 4:3 quepa entero en pantallas bajas. */
   --g-chrome: 380px;
+  /* Proporción W/H del campo para el layout móvil compartido (SPEC 11).
+     TODO: cámbiala si el campo no es 4:3 (p. ej. 1 para 1:1, 0.75 para 3:4). */
+  --crt-ar: 1.3333;
 }
 
 /* ---- Marco y canvas ---- */
@@ -135,29 +138,13 @@
   font-size: 12px;
 }
 
-/* ---- Móvil ---- */
-@media (max-width: 640px) {
-  .__id__-root.av-player {
-    padding-inline: 16px;
-  }
-  .__id__-root .crt {
-    padding: 12px;
-    border-radius: 18px;
-  }
-  /* En móvil la barra del CRT solo deja el LED y el nivel. */
-  .__id__-root .crt-bottom > span:nth-child(2) {
-    display: none;
-  }
-  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
-  .__id__-root .hud-actions {
-    width: 100%;
-  }
-  .__id__-root .hud-actions > .btn {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 6px;
-    font-size: 9px;
-    letter-spacing: 0.08em;
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD compacto, marco y tamaño del CRT vienen del layout compartido de
+   app/globals.css (SPEC 11): aquí no se redefinen. Solo ajustes propios. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  .__id__-select {
+    height: var(--tap-min);
   }
   .__id__-overlay {
     gap: 10px;

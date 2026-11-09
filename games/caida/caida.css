@@ -366,16 +366,79 @@
   cursor: default;
 }
 
-@media (max-width: 640px) {
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD y marco vienen del layout compartido de app/globals.css (SPEC 11).
+   La pantalla de CAÍDA no tiene proporción fija: el tablero (1:2) se dimensiona
+   por ancho, limitado por el alto disponible, y el panel compacto queda a su
+   lado para que la pieza siguiente se vea siempre junto al tablero. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  body .caida-root .crt {
+    width: fit-content;
+    max-width: 100%;
+  }
   .caida-stage {
-    gap: 20px;
-    padding: 20px 12px;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 10px;
+  }
+  .caida-board {
+    flex: 0 0 auto;
+    height: auto;
+    width: min(
+      calc((100dvh - var(--player-chrome) - var(--player-reserve) - 20px) / 2),
+      calc(100% - 108px)
+    );
   }
   .caida-panel {
+    width: 96px;
+    flex: 0 0 96px;
+    gap: 14px;
+  }
+  .caida-next {
+    width: 72px;
+    height: 72px;
+  }
+  .caida-select {
     width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    height: var(--tap-min);
+  }
+  .caida-toggle {
+    min-height: var(--tap-min);
+  }
+  .caida-step {
+    width: var(--tap-min);
+    height: var(--tap-min);
+  }
+  /* Los controles de teclado siguen en el menú de pausa (VER CONTROLES). */
+  .caida-panel > .caida-section:last-child {
+    display: none;
+  }
+  .caida-overlay {
+    gap: 10px;
+  }
+  .caida-overlay-title {
+    font-size: 14px;
+  }
+}
+
+/* En horizontal manda el alto: sin el término en % el marco se ajusta al
+   contenido (fit-content) y no deja franjas negras a los lados. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .caida-board {
+    width: calc(
+      (100dvh - var(--player-chrome) - var(--player-reserve) - 20px) / 2
+    );
+  }
+  /* Panel en dos columnas (Siguiente | Skin, Tema): sobra ancho y así su alto
+     no supera al del tablero aunque --player-reserve lo encoja. */
+  .caida-panel {
+    display: grid;
+    grid-template-columns: 96px 96px;
+    gap: 14px 12px;
+    align-content: start;
+    width: auto;
+    flex: 0 0 auto;
   }
 }
 
