@@ -14,19 +14,20 @@ Arcade Vault is an online platform for playing games and competing for the highe
 
 Development follows **Spec Driven Design**: write a spec in `specs/NN-name.md` with `/spec`, get it approved, then implement it with `/spec-impl` (skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills), pinned in `skills-lock.json`). Each spec ships on its own branch `spec-NN-<name>` and is merged through a PR. Specs so far:
 
-| #   | Spec                         | What it delivered                                                |
-| --- | ---------------------------- | ---------------------------------------------------------------- |
-| 01  | `01-mvp-pantallas-visuales`  | Visual MVP: catalog, detail, player, hall of fame, auth screens  |
-| 02  | `02-inicio-y-acerca-de`      | Landing (`/`) and About (`/acerca-de`)                           |
-| 03  | `03-contacto-con-resend`     | Contact form that emails through Resend                          |
-| 04  | `04-base-tecnica-supabase`   | Typed Supabase clients, env vars, `supabase:check`               |
-| 05  | `05-juego-caida`             | CAÍDA (falling blocks), first real game, with skins/prefs        |
-| 06  | `06-juego-rocas`             | ROCAS (asteroids-style, canvas)                                  |
-| 07  | `07-leaderboard-supabase`    | Real leaderboard in Supabase (`scores` + RPCs)                   |
-| 08  | `08-juego-bloque-buster`     | BLOQUE BUSTER (brick breaker)                                    |
-| 09  | `09-juego-serpentina`        | SERPENTINA (snake)                                               |
-| 10  | `10-juego-duelo-pixel`       | DUELO PIXEL (paddles vs a ladder of 5 CPU rivals)                |
-| 11  | `11-diseno-responsive-movil` | Responsive from 360 px: mobile nav, 44 px targets, mobile player |
+| #   | Spec                         | What it delivered                                                      |
+| --- | ---------------------------- | ---------------------------------------------------------------------- |
+| 01  | `01-mvp-pantallas-visuales`  | Visual MVP: catalog, detail, player, hall of fame, auth screens        |
+| 02  | `02-inicio-y-acerca-de`      | Landing (`/`) and About (`/acerca-de`)                                 |
+| 03  | `03-contacto-con-resend`     | Contact form that emails through Resend                                |
+| 04  | `04-base-tecnica-supabase`   | Typed Supabase clients, env vars, `supabase:check`                     |
+| 05  | `05-juego-caida`             | CAÍDA (falling blocks), first real game, with skins/prefs              |
+| 06  | `06-juego-rocas`             | ROCAS (asteroids-style, canvas)                                        |
+| 07  | `07-leaderboard-supabase`    | Real leaderboard in Supabase (`scores` + RPCs)                         |
+| 08  | `08-juego-bloque-buster`     | BLOQUE BUSTER (brick breaker)                                          |
+| 09  | `09-juego-serpentina`        | SERPENTINA (snake)                                                     |
+| 10  | `10-juego-duelo-pixel`       | DUELO PIXEL (paddles vs a ladder of 5 CPU rivals)                      |
+| 11  | `11-diseno-responsive-movil` | Responsive from 360 px: mobile nav, 44 px targets, mobile player       |
+| 12  | `12-controles-tactiles`      | Touch controls (`TouchControls`: D-pad, A, B, pause) in all five games |
 
 ## Commands
 
@@ -95,7 +96,12 @@ Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`b
 - `core.ts` holds the game's pure logic: no React, DOM, `window` or `localStorage`.
 - `localStorage` keys of a game use the prefix `av_<id>_` (e.g. `av_caida_skin`). A run in progress is not persisted.
 - Game styles live in `games/<id>/<id>.css`, imported from the game component, with every rule scoped under the game's root class (e.g. `.caida-root`).
-- **Mobile layout (SPEC 11).** The player's mobile layout is shared, in the unlayered block at the end of `app/globals.css`: in portrait (≤ 840 px) the HUD is compact in two rows (stats / buttons, the «Jugador» stat hidden); in short landscape (`max-height: 500px`) the HUD becomes a column left of the CRT and the nav stops being sticky. The CRT width comes from the available height, `(100dvh − --player-chrome − --player-reserve) × --crt-ar + frame`, so HUD and canvas fit on one screen. A game only declares `--crt-ar` (its W/H, default 4:3) on `.<id>-root`, keeps its desktop `.crt` max-width, and adds a mobile block with the same media query for its own tweaks (select at `--tap-min`, overlay sizes); it must not redefine HUD, CRT padding or `.crt-bottom` on mobile. `--player-reserve` (default `0px`) is the room the future touch-controls spec will reserve under the CRT; `--tap-min` (44 px) is the minimum touch target below 840 px. The start overlay carries `<p className="touch-notice">Controles táctiles próximamente · necesitas un teclado</p>`, shown by CSS only on touch-only devices. Verify at 360×740, 390×844, 844×390, 768×1024 and 1440×900.
+- **Mobile layout (SPEC 11).** The player's mobile layout is shared, in the unlayered block at the end of `app/globals.css`: in portrait (≤ 840 px) the HUD is compact in two rows (stats / buttons, the «Jugador» stat hidden); in short landscape (`max-height: 500px`) the HUD becomes a column left of the CRT and the nav stops being sticky. The CRT width comes from the available height, `(100dvh − --player-chrome − --player-reserve) × --crt-ar + frame`, so HUD and canvas fit on one screen. A game only declares `--crt-ar` (its W/H, default 4:3) on `.<id>-root`, keeps its desktop `.crt` max-width, and adds a mobile block with the same media query for its own tweaks (select at `--tap-min`, overlay sizes); it must not redefine HUD, CRT padding or `.crt-bottom` on mobile. `--player-reserve` (default `0px`) is the room reserved under the CRT (the touch strip on touch devices, see below); `--tap-min` (44 px) is the minimum touch target below 840 px. Verify at 360×740, 390×844, 844×390, 768×1024 and 1440×900.
+- **Touch controls (SPEC 12).** Every playable game renders `components/touch-controls.tsx` (`<TouchControls>`) as a direct child of `.av-player`, right after `.crt`, always mounted. It knows no game: it writes a mutable `TouchInput` (`lib/touch-input.ts`: `createTouchInput`, `releaseAll`, `TouchButton` = `up|down|left|right|a|b`) and calls `onPress({ button, repeated })` / `onRelease(button)`; it never imports from `games/`.
+  - The game creates the input with `const [touch] = useState(createTouchInput)` (stable object, survives `<Activity>`; a `useRef` read in render fails the `react-hooks/refs` lint) and passes `active={phase === "playing"}`, `paused={phase === "paused"}`, `pauseEnabled={inRun}`, `onPauseToggle={phase === "paused" ? resume : pause}` (the same `pause()` / `resume()` as the HUD button and P / Esc — no second pause), plus `disabled` for unused buttons (dimmed, `aria-disabled`) and optional `repeat: { delay, interval }` per button.
+  - Held actions are read in the loop OR-ed with the keyboard (`held(KEYS) || touch.state.left`, add `touch` to the loop effect deps); one-shot actions go in `onPress` ignoring `ev.repeated`, like `!ev.repeat`. Mapping: CAÍDA ← → ↓ repeat (170/50 ms) move / soft drop, ↑ and A rotate, B hard drop; ROCAS ← → turn, ↑ or B thrust, A fire; BLOQUE BUSTER ← → paddle, A/B launch; SERPENTINA D-pad turns (A/B disabled); DUELO PIXEL ↑ ↓ paddle, A plasma (B disabled).
+  - D-pad is one zone that follows the finger (8 directions, 25 % dead zone, geometry measured on each `pointerdown`); every control tracks its own `pointerId` with `setPointerCapture` and releases on `pointerup` / `pointercancel` / `lostpointercapture`, window `blur`, hidden page, `active={false}` and unmount.
+  - Shown only by CSS under `@media (pointer: coarse) and (not (any-pointer: fine))` (block «Controles táctiles (SPEC 12)» at the end of `app/globals.css`); on desktop it is `display: none` and reserves nothing. Portrait: a strip under the CRT (D-pad left, pause centred on top, A/B right) and `--player-reserve` becomes `--touch-strip-h` + bottom safe area. Short landscape: `.touch-controls` is `display: contents`, `.av-player` gets three columns (HUD + D-pad | CRT | pause + A/B) and `--player-reserve` is the bottom safe area. Tokens `--touch-btn` (56 px, shrinks to ≥ 48 px on narrow / short screens) and `--touch-strip-h`; safe areas via `--sai-left/right/bottom`. No control may overlap `.crt-screen`. There is no `.touch-notice` any more.
 - Game over goes through the shared `components/game-over-modal.tsx`, which saves with the Server Action `submitScore()` (`app/juegos/actions.ts`) — the single score path. Only games registered in `PLAYABLE` are ranked (`isRanked`); pass `ranked` to the modal (`true` for real games, `false` for the simulator).
 - With `cacheComponents`, leaving a route keeps it in a hidden `<Activity>`: React state survives, effects unmount and remount. Keep loop state in refs that are not reset on effect cleanup, and cancel `requestAnimationFrame` / listeners in every cleanup.
 

@@ -74,12 +74,23 @@ Salir con SALIR oculta la ruta pero conserva el estado de React; los efectos se 
 - Los botones hacen `blur()` tras el clic para que Espacio no los vuelva a pulsar.
 - Foco inicial: JUGAR en `start`, REANUDAR en la pausa, VOLVER en "Ver controles".
 
+### Controles táctiles (SPEC 12)
+
+- `<TouchControls>` (`components/touch-controls.tsx`) va como hijo directo de `.av-player`, justo después del `.crt`, **siempre montado** (el layout no salta). Solo se ve en dispositivos táctiles (CSS global); en escritorio no ocupa espacio.
+- El input se crea con `const [touch] = useState(createTouchInput)` (`lib/touch-input.ts`): objeto mutable y estable que sobrevive a `<Activity>`. No uses `useRef(...).current` en el render (falla la regla `react-hooks/refs`).
+- Props fijas: `input={touch}`, `active={phase === "playing"}`, `paused={phase === "paused"}`, `pauseEnabled={inRun}`, `onPauseToggle={phase === "paused" ? resume : pause}`. La pausa táctil usa las mismas `pause()` / `resume()` que el botón PAUSA y P / Esc.
+- **Mantener** (mover, girar, empujar): el bucle lee `touch.state.<botón>` con OR junto al teclado (`held(KEYS) || touch.state.left`) y `touch` va en las dependencias del efecto del bucle.
+- **Un toque** (disparar, rotar, lanzar): en `onPress`, `if (phaseRef.current !== "playing" || ev.repeated) return;` y la misma acción que la tecla (flag en ref o función del motor).
+- **Repite** (mover pieza, caída suave): `repeat={{ left: { delay: 170, interval: 50 }, … }}` y la acción en cada `onPress`.
+- Botones sin uso: `disabled={{ a: true, b: true }}` (se ven atenuados). El layout es el mismo en todos los juegos.
+- El mapeo (↑ ↓ ← → A B) lo fija el spec del juego, en una tabla como la de `specs/12-controles-tactiles.md`.
+
 ### UI (textos exactos)
 
 - Raíz: `<div className="<id>-root av-player fade-in">`.
 - HUD `.player-hud` con `.hud-stat`: **Jugador** (`user?.name ?? "INVITADO"` de `useSession()`), **Puntuación** (`toLocaleString("es-ES")`) y los del spec (Vidas con `♥`, Nivel con dos dígitos `pad2`…). Botones `.hud-actions`: `PAUSA`/`REANUDAR` (`btn yellow`), `FIN` (`btn magenta`), ambos deshabilitados fuera de partida, y `SALIR` (`<Link href={`/juegos/${game.id}`} className="btn ghost">`).
 - Marco `.crt` > `.crt-screen` con el `<canvas>` (resolución interna fija, `role="img"`, `aria-label`) y los overlays; `.crt-bottom` con `SEÑAL OK`, `{game.title} · CRT-83 · 60 HZ` y un dato.
-- Overlay de inicio: `¿JUGAMOS?`, botón `JUGAR` (`btn lg pulse`), pista `o pulsa Enter` y el aviso táctil `<p className="touch-notice">Controles táctiles próximamente · necesitas un teclado</p>` (lo muestra el CSS global solo en dispositivos táctiles, SPEC 11).
+- Overlay de inicio: `¿JUGAMOS?`, botón `JUGAR` (`btn lg pulse`), pista `o pulsa Enter`. Sin aviso táctil: los controles táctiles reales sustituyen al antiguo `.touch-notice` (SPEC 12).
 - Pausa: título `PAUSA`; `REANUDAR`, `REINICIAR`, `VER CONTROLES`; vista de controles con `VOLVER`.
 - Lista de controles visible bajo el CRT y dentro de la pausa.
 - La marca del juego original (Tetris, Asteroids, Arkanoid…) no aparece en ningún texto visible.
@@ -113,7 +124,8 @@ Salir con SALIR oculta la ruta pero conserva el estado de React; los efectos se 
 - Reutiliza las clases de la plataforma (`av-player`, `player-hud`, `hud-stat`, `btn`, `crt`, `crt-screen`, `crt-bottom`, `pixel`) y los tokens (`--cyan`, `--magenta`, `--yellow`, `--ink`, `--ink-dim`, `--pixel`, `--mono`).
 - Canvas con resolución interna fija, escalado por CSS manteniendo proporción; en escritorio el marco se estrecha con `100svh` para caber en pantallas bajas.
 - **Móvil (SPEC 11):** el HUD compacto, el marco y el tamaño del CRT los pone el layout compartido de `app/globals.css`. El juego solo declara `--crt-ar: W/H` en `.<id>-root` (si no es 4:3) y un bloque `@media (max-width: 840px) and (orientation: portrait), (orientation: landscape) and (max-height: 500px)` con sus ajustes (select a `var(--tap-min)`, overlays). No redefine en móvil el HUD, el padding del `.crt` ni `.crt-bottom`.
-- Revisar a 360×740, 390×844, 844×390 y 1440×900: sin scroll horizontal, y en móvil HUD + canvas completo caben a la vez en pantalla (en horizontal, HUD a la izquierda).
+- **Táctil (SPEC 12):** la franja de controles (vertical) o las columnas laterales (horizontal) y `--player-reserve` los pone el layout compartido; el juego no los redefine. Si su panel o canvas no cabe con la franja, lo ajusta en su bloque móvil (como `games/caida/caida.css`).
+- Revisar a 360×740, 390×844, 844×390 y 1440×900: sin scroll horizontal, y en móvil HUD + canvas completo + controles táctiles caben a la vez en pantalla (en horizontal, HUD + D-pad a la izquierda y pausa + A/B a la derecha).
 - Glow (`shadowBlur`) solo en los elementos principales, por rendimiento.
 
 ## 6. Preferencias (la del skin siempre; el resto solo si el spec las pide)
@@ -153,7 +165,7 @@ Navegador (`npm run dev`, Playwright o Chrome MCP):
 - [ ] SALIR durante la partida y volver: en pausa, sin bucles ni listeners duplicados.
 - [ ] Sin errores ni avisos de hidratación en consola.
 - [ ] 1440 px, 390×844, 360×740 y 844×390: el canvas cabe con el HUD en una pantalla y mantiene la proporción; botones y select miden ≥ 44 px en móvil.
-- [ ] Con emulación táctil (`hasTouch` + `isMobile`) el overlay inicial muestra el aviso táctil y JUGAR sigue funcionando.
+- [ ] Con emulación táctil (`hasTouch` + `isMobile`) se ven D-pad, A, B y pausa sin tapar `.crt-screen`; cada fila del mapeo táctil del spec funciona; los botones sin uso se ven atenuados; la pausa táctil abre y cierra el menú y está deshabilitada en el inicio y en el modal. En escritorio no aparecen.
 - [ ] El selector cambia entre Clásico, Neón y Retro (Clásico por defecto), el skin persiste al recargar (`av_<id>_skin`) y los tres se leen bien en oscuro (§7).
 
 Ranking (Supabase MCP):

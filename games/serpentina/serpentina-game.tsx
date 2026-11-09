@@ -17,7 +17,9 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
 import {
   createState,
   H,
@@ -131,6 +133,9 @@ const sameStats = (a: RunStats, b: RunStats) =>
   a.length === b.length &&
   a.bonusEaten === b.bonusEaten;
 
+// Controles táctiles (SPEC 12): A y B no se usan en SERPENTINA.
+const TOUCH_DISABLED = { a: true, b: true } as const;
+
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // Tras un clic, el botón suelta el foco para que Espacio no lo vuelva a pulsar.
@@ -163,6 +168,11 @@ export function SerpentinaGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Direcciones pulsadas desde el último frame, en orden (cola de giros).
   const turnsRef = useRef<Dir[]>([]);
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
   // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
   const skinRef = useRef(getSkin(skin));
 
@@ -416,6 +426,15 @@ export function SerpentinaGame({ game }: PlayableProps) {
     };
   }, [pause, resume, showPauseView, startRun]);
 
+  // D-pad táctil: cada flecha nueva encola un giro, como una tecla sin
+  // autorrepetición. En una diagonal solo llega la flecha recién pulsada, así
+  // que manda la última dirección.
+  const onTouchPress = useCallback((ev: TouchPressEvent) => {
+    if (phaseRef.current !== "playing" || ev.repeated) return;
+    if (ev.button === "a" || ev.button === "b") return;
+    turnsRef.current.push(ev.button);
+  }, []);
+
   const inRun = phase === "playing" || phase === "paused";
 
   return (
@@ -500,9 +519,6 @@ export function SerpentinaGame({ game }: PlayableProps) {
               <p className="serpentina-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -556,6 +572,16 @@ export function SerpentinaGame({ game }: PlayableProps) {
           <span>NIVEL {pad2(stats.level)}</span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        disabled={TOUCH_DISABLED}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       <div className="serpentina-skin-row">
         <section className="serpentina-help" aria-label="Controles">

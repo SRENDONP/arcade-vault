@@ -59,7 +59,8 @@ Pregunta con `AskUserQuestion` lo que no puedas deducir de la referencia o del c
 - **Campo lógico**: tamaño fijo del canvas (p. ej. 800×600, 300×600) y proporción.
 - **Estética**: paleta neón de la plataforma (cyan, magenta, amarillo, verde) y color del catálogo.
 - **Preferencias** en `localStorage` (skins, tema, nivel inicial): por defecto ninguna. Si las hay, claves `av_<id>_*`.
-- **Fuera de alcance**: táctil, sonido, enemigos o modos extra. Por defecto todo fuera, como en specs anteriores.
+- **Mapeo táctil** (↑ ↓ ← → A B): qué hace cada control, si se mantiene, es de un toque o repite, y qué botones quedan sin uso (atenuados). La integración de `TouchControls` es fija (`integracion.md`).
+- **Fuera de alcance**: gestos táctiles, sonido, enemigos o modos extra. Por defecto todo fuera, como en specs anteriores.
 
 No preguntes por la integración (HUD, pausa, modal, guardado, Supabase): está decidida en `integracion.md`.
 
