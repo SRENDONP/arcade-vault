@@ -2,15 +2,15 @@
 
 Planificador de juegos de Arcade Vault. Registro detallado de sugerencias en [sugerencias.md](sugerencias.md) — léelo siempre antes de proponer.
 
-## Estado del catálogo (2026-11-06, tras SPEC 09)
+## Estado del catálogo (2026-11-08)
 
 - Jugables (ranked): `caida` (PUZZLE), `rocas` (SHOOTER), `bloque-buster` (ARCADE), `serpentina` (ARCADE).
-- Simulados (candidatos naturales): `gloton` (ARCADE), `invasores` (SHOOTER), `ranaria`, `duelo-pixel` (VERSUS).
-- Siguiente spec libre: 10.
-- VERSUS es la única categoría sin juego jugable.
+- En curso: `duelo-pixel` (VERSUS), elegido 2026-11-08, spec en redacción (SPEC 10 previsto).
+- Simulados restantes: `gloton` (ARCADE), `invasores` (SHOOTER), `ranaria` (ARCADE).
+- Siguiente spec libre: 10 (lo ocupará `duelo-pixel`; tras él, 11).
 - `references/` no tiene material para ningún simulado: todos serán diseño original.
-- Recomendación vigente (2026-11-06): `duelo-pixel`, pendiente de decisión del usuario.
+- Próximo candidato natural tras DUELO PIXEL: `invasores` (35/40).
 
 ## Preferencias del usuario
 
-- (ninguna registrada todavía)
+- Aceptó la recomendación de llenar el hueco de categoría (VERSUS) frente a reutilizar más código: valora la variedad de categorías.

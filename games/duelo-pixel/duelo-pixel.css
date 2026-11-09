@@ -1,0 +1,266 @@
+/* DUELO PIXEL — estilos del área del juego.
+   Todas las reglas cuelgan de .duelo-pixel-root para no afectar a otras páginas.
+   El canvas tiene resolución interna fija 800×500 y se escala por CSS dentro
+   de .crt-screen, que aquí pasa a 8:5. */
+
+.duelo-pixel-root {
+  --g-overlay-bg: rgba(5, 5, 12, 0.78);
+  --g-accent: var(--cyan);
+  --g-accent-glow: rgba(0, 245, 255, 0.45);
+  --g-kbd-bg: #0d0d1a;
+  --g-kbd-border: rgba(0, 245, 255, 0.25);
+  --g-text: var(--ink-dim);
+  /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
+     estrecha para que el campo 8:5 quepa entero en pantallas bajas. */
+  --g-chrome: 380px;
+}
+
+/* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
+.duelo-pixel-root[data-skin="neon"] {
+  --g-overlay-bg: rgba(0, 0, 0, 0.82);
+  --g-accent: #00f0ff;
+  --g-accent-glow: rgba(0, 240, 255, 0.85);
+  --g-kbd-bg: #00080a;
+  --g-kbd-border: rgba(0, 240, 255, 0.5);
+}
+
+.duelo-pixel-root[data-skin="neon"] .crt-screen {
+  background: #000000;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+}
+
+.duelo-pixel-root[data-skin="retro"] {
+  --g-overlay-bg: rgba(16, 16, 28, 0.88);
+  --g-accent: #ffd93a;
+  --g-accent-glow: transparent;
+  --g-kbd-bg: #10101c;
+  --g-kbd-border: #4fc3f7;
+}
+
+.duelo-pixel-root[data-skin="retro"] .crt-screen {
+  background: #10101c;
+}
+
+/* Retro: scanlines CRT más marcadas, sin desenfoque y canvas pixelado. */
+.duelo-pixel-root[data-skin="retro"] .crt-screen::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.42) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+.duelo-pixel-root[data-skin="retro"] .duelo-pixel-canvas {
+  image-rendering: pixelated;
+}
+
+.duelo-pixel-root[data-skin="retro"] .duelo-pixel-overlay {
+  backdrop-filter: none;
+}
+
+.duelo-pixel-root[data-skin="retro"] .duelo-pixel-select,
+.duelo-pixel-root[data-skin="retro"] kbd {
+  border-radius: 0;
+}
+
+/* ---- Marco y canvas ---- */
+.duelo-pixel-root .crt {
+  width: 100%;
+  max-width: max(320px, calc((100svh - var(--g-chrome)) * 8 / 5 + 48px));
+  margin-inline: auto;
+}
+
+/* Campo 800×500: pantalla 8:5 en lugar del 4:3 de la plataforma. */
+.duelo-pixel-root .crt-screen {
+  aspect-ratio: 8 / 5;
+}
+
+/* La viñeta del CRT (::before) queda sobre el canvas; las scanlines (::after)
+   ya lo están por orden del DOM. */
+.duelo-pixel-root .crt-screen::before {
+  z-index: 1;
+}
+
+.duelo-pixel-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Overlays (inicio y pausa) sobre el campo ---- */
+.duelo-pixel-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* por encima del canvas, la viñeta y las scanlines */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--g-overlay-bg);
+  backdrop-filter: blur(2px);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.duelo-pixel-overlay-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--g-accent);
+  text-shadow: 0 0 10px var(--g-accent-glow);
+}
+
+.duelo-pixel-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--g-text);
+}
+
+.duelo-pixel-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(240px, 100%);
+}
+
+.duelo-pixel-root .btn:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 3px;
+}
+
+/* ---- HUD: la racha en el color del plasma ---- */
+.duelo-pixel-root .hud-stat.streak .v {
+  color: var(--yellow);
+}
+
+/* ---- Lista de controles ---- */
+.duelo-pixel-controls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--g-text);
+}
+
+.duelo-pixel-controls li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duelo-pixel-controls .keys {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.duelo-pixel-menu .duelo-pixel-controls {
+  margin-bottom: 8px;
+}
+
+.duelo-pixel-root kbd {
+  padding: 1px 6px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Bajo el CRT: controles en una fila centrada y el selector de skin. */
+.duelo-pixel-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 28px;
+  margin-top: 20px;
+}
+
+.duelo-pixel-help .duelo-pixel-controls {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  font-size: 12px;
+}
+
+/* ---- Selector de skin ---- */
+.duelo-pixel-skin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.duelo-pixel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.duelo-pixel-select {
+  height: 30px;
+  padding: 0 8px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.duelo-pixel-select:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Móvil ---- */
+@media (max-width: 640px) {
+  .duelo-pixel-root.av-player {
+    padding-inline: 16px;
+  }
+  .duelo-pixel-root .crt {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  /* En móvil la barra del CRT solo deja el LED y el rival. */
+  .duelo-pixel-root .crt-bottom > span:nth-child(2) {
+    display: none;
+  }
+  /* Los tres botones reparten el ancho: PAUSA ↔ REANUDAR no mueve el HUD. */
+  .duelo-pixel-root .hud-actions {
+    width: 100%;
+  }
+  .duelo-pixel-root .hud-actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .duelo-pixel-root .player-hud .flex {
+    gap: 12px 18px;
+  }
+  .duelo-pixel-overlay {
+    gap: 10px;
+  }
+  .duelo-pixel-overlay-title {
+    font-size: 14px;
+  }
+  .duelo-pixel-help {
+    gap: 12px;
+  }
+}

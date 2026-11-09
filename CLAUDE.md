@@ -25,6 +25,7 @@ Development follows **Spec Driven Design**: write a spec in `specs/NN-name.md` w
 | 07  | `07-leaderboard-supabase`   | Real leaderboard in Supabase (`scores` + RPCs)                  |
 | 08  | `08-juego-bloque-buster`    | BLOQUE BUSTER (brick breaker)                                   |
 | 09  | `09-juego-serpentina`       | SERPENTINA (snake)                                              |
+| 10  | `10-juego-duelo-pixel`      | DUELO PIXEL (paddles vs a ladder of 5 CPU rivals)               |
 
 ## Commands
 
@@ -85,7 +86,7 @@ Project `ehzxppntfcaqiobqmuub`, via `@supabase/ssr`. Env: `NEXT_PUBLIC_SUPABASE_
 
 ## Games (`games/`)
 
-Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`bloque-buster`), **SERPENTINA** (`serpentina`). The rest of the catalog (`gloton`, `invasores`, `ranaria`, `duelo-pixel`) still uses the simulator.
+Playable today: **CAÍDA** (`caida`), **ROCAS** (`rocas`), **BLOQUE BUSTER** (`bloque-buster`), **SERPENTINA** (`serpentina`), **DUELO PIXEL** (`duelo-pixel`). The rest of the catalog (`gloton`, `invasores`, `ranaria`) still uses the simulator.
 
 - One folder per playable game: `games/<id>/`, where `<id>` is the game's `id` in `lib/games.ts`. Typical files: `core.ts` (logic), `render.ts` (canvas drawing), `<id>-game.tsx` (component), `<id>.css`, `skins.ts` + `prefs.ts`.
 - Every playable game ships at least three skins — `clasico` (default), `neon`, `retro` — each readable on a dark background, with the choice stored in `av_<id>_skin` (contract §7 in `.claude/skills/nuevo-juego/integracion.md`; pattern in `games/caida/`). The `skin-designer` agent audits and implements this.

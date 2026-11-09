@@ -97,11 +97,11 @@ export const GAMES: Game[] = [
     id: "duelo-pixel",
     title: "DUELO PIXEL",
     short: "Dos paletas. Una pelota. Reflejos máximos.",
-    long: "El duelo más puro: dos paletas verticales se enfrentan por rebotar una pelota luminosa. Modo solitario contra la CPU o partida local a dos jugadores.",
+    long: "Tu paleta de luz contra una escalera de cinco rivales CPU. Gana sets a 5 para subir, encadena puntos para multiplicar y carga el golpe de plasma. Pierde un set y se acabó; vence a NÉBULA y el circuito vuelve a empezar, más rápido.",
     cat: "VERSUS",
     cover: "cover-duelo",
     color: "cyan",
-    best: 24,
+    best: 18500,
     plays: "4.2K",
   },
 ];
