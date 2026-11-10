@@ -39,19 +39,6 @@ const AB_LABEL: Record<(typeof AB_BUTTONS)[number], string> = {
   b: "Botón B",
 };
 
-/**
- * setPointerCapture lanza NotFoundError si el puntero ya no está activo (p. ej.
- * se levantó antes de que llegara el evento, o un PointerEvent sintético de una
- * prueba). Sin captura el control sigue funcionando con pointerup/cancel.
- */
-function capture(el: Element, pointerId: number) {
-  try {
-    el.setPointerCapture(pointerId);
-  } catch {
-    // sin captura
-  }
-}
-
 // --- D-pad -------------------------------------------------------------------
 
 type Arrow = "up" | "down" | "left" | "right";
@@ -103,7 +90,10 @@ export function TouchControls(props: TouchControlsProps) {
   const pointersRef = useRef(new Map<number, TouchButton>());
   // Temporizador de repetición activo por botón (timeout y luego interval).
   const timersRef = useRef(new Map<TouchButton, number>());
+  const rootRef = useRef<HTMLDivElement>(null);
   const pauseBtnRef = useRef<HTMLButtonElement>(null);
+  // Dedo que está pulsando el botón de pausa (se confirma al levantarlo).
+  const pausePointerRef = useRef<number | null>(null);
   // D-pad: un solo dedo a la vez, con la geometría medida en su pointerdown
   // (sin cachear entre toques, por <Activity> y los giros de pantalla).
   const dpadPointerRef = useRef<number | null>(null);
@@ -173,6 +163,7 @@ export function TouchControls(props: TouchControlsProps) {
     dpadPointerRef.current = null;
     dpadRectRef.current = null;
     dpadHeldRef.current.clear();
+    pausePointerRef.current = null;
     for (const button of [...timersRef.current.keys()]) stopRepeat(button);
     const released = releaseAll(propsRef.current.input);
     paint();
@@ -194,21 +185,127 @@ export function TouchControls(props: TouchControlsProps) {
     }
   }, [disabledKey, release]);
 
-  // Liberación segura: foco de la ventana, página oculta y desmontaje
-  // (incluido el ocultarse la ruta dentro de <Activity>).
+  // --- Seguimiento de los dedos ----------------------------------------------
+  //
+  // Safari en iOS no es fiable con setPointerCapture / lostpointercapture en
+  // toques: al mover la captura implícita (de la flecha al D-pad, o al propio
+  // botón) dispara un lostpointercapture que soltaba el control en el mismo
+  // toque, y nada respondía. Por eso no se captura: cada control solo escucha
+  // su pointerdown y el resto (move, up, cancel) se sigue en window por
+  // pointerId, llegue donde llegue el dedo.
+
+  // Suelta lo que sujetaba un dedo (pointerup o pointercancel en window).
+  const endPointer = useCallback(
+    (pointerId: number, x: number, y: number, cancelled: boolean) => {
+      // A / B: se suelta si ningún otro dedo sigue en el mismo botón.
+      const pointers = pointersRef.current;
+      const button = pointers.get(pointerId);
+      if (button !== undefined) {
+        pointers.delete(pointerId);
+        if (![...pointers.values()].includes(button)) release(button);
+      }
+
+      // D-pad
+      if (pointerId === dpadPointerRef.current) {
+        dpadPointerRef.current = null;
+        dpadRectRef.current = null;
+        const held = dpadHeldRef.current;
+        for (const arrow of [...held]) {
+          held.delete(arrow);
+          release(arrow);
+        }
+      }
+
+      // Pausa: se confirma al levantar el dedo encima del botón.
+      if (pointerId === pausePointerRef.current) {
+        pausePointerRef.current = null;
+        const el = pauseBtnRef.current;
+        el?.removeAttribute("data-pressed");
+        if (cancelled || !el) return;
+        const r = el.getBoundingClientRect();
+        const inside =
+          x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        if (inside && propsRef.current.pauseEnabled) {
+          propsRef.current.onPauseToggle();
+        }
+      }
+    },
+    [release],
+  );
+
+  // Pasa de las flechas sujetas a las del punto (x, y): primero suelta las que
+  // sobran y luego pulsa las nuevas (en una diagonal, solo emite la nueva).
+  const aimDpad = useCallback(
+    (x: number, y: number) => {
+      const rect = dpadRectRef.current;
+      if (!rect) return;
+      const { disabled: off } = propsRef.current;
+      const next = new Set(arrowsAt(rect, x, y).filter((a) => !off?.[a]));
+      const held = dpadHeldRef.current;
+      for (const arrow of [...held]) {
+        if (next.has(arrow)) continue;
+        held.delete(arrow);
+        release(arrow);
+      }
+      for (const arrow of next) {
+        if (held.has(arrow)) continue;
+        held.add(arrow);
+        press(arrow);
+      }
+    },
+    [press, release],
+  );
+
+  // Dedos que se mueven o se levantan en cualquier sitio, y liberación segura:
+  // foco de la ventana, página oculta y desmontaje (incluido el ocultarse la
+  // ruta dentro de <Activity>).
   useEffect(() => {
+    const onMove = (ev: globalThis.PointerEvent) => {
+      if (ev.pointerId !== dpadPointerRef.current) return;
+      if (!propsRef.current.active) return;
+      aimDpad(ev.clientX, ev.clientY);
+    };
+    const onUp = (ev: globalThis.PointerEvent) =>
+      endPointer(ev.pointerId, ev.clientX, ev.clientY, false);
+    const onCancel = (ev: globalThis.PointerEvent) =>
+      endPointer(ev.pointerId, ev.clientX, ev.clientY, true);
     const onBlur = () => releaseEverything();
     const onVisibility = () => {
       if (document.hidden) releaseEverything();
     };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
     window.addEventListener("blur", onBlur);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
       window.removeEventListener("blur", onBlur);
       document.removeEventListener("visibilitychange", onVisibility);
       releaseEverything();
     };
-  }, [releaseEverything]);
+  }, [aimDpad, endPointer, releaseEverything]);
+
+  // iOS: touch-action no basta para que Safari no convierta el toque en
+  // scroll, zoom por doble toque, lupa o selección (todo acaba en
+  // pointercancel). Un touchstart / touchmove / touchend no pasivo con
+  // preventDefault lo impide. Como eso también suprime el click sintético, la
+  // pausa se confirma en pointerup (endPointer) y onClick solo es del teclado.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const block = (ev: Event) => {
+      if (ev.cancelable) ev.preventDefault();
+    };
+    const opts: AddEventListenerOptions = { passive: false };
+    const types = ["touchstart", "touchmove", "touchend", "gesturestart"];
+    for (const type of types) root.addEventListener(type, block, opts);
+    return () => {
+      for (const type of types) root.removeEventListener(type, block, opts);
+    };
+  }, []);
 
   // --- A y B: un puntero por botón ------------------------------------------
 
@@ -217,48 +314,15 @@ export function TouchControls(props: TouchControlsProps) {
     const p = propsRef.current;
     if (!p.active || p.disabled?.[button]) return;
     ev.preventDefault();
-    capture(ev.currentTarget, ev.pointerId);
     pointersRef.current.set(ev.pointerId, button);
     press(button);
   };
 
-  // pointerup, pointercancel y lostpointercapture: suelta el botón de ese dedo
-  // si ningún otro dedo lo sigue sujetando.
-  const onButtonEnd = (ev: PointerEvent<HTMLButtonElement>) => {
-    const pointers = pointersRef.current;
-    const button = pointers.get(ev.pointerId);
-    if (button === undefined) return;
-    pointers.delete(ev.pointerId);
-    for (const other of pointers.values()) if (other === button) return;
-    release(button);
-  };
-
   // --- D-pad: una zona que sigue al dedo --------------------------------------
-
-  // Pasa de las flechas sujetas a las del punto (x, y): primero suelta las que
-  // sobran y luego pulsa las nuevas (en una diagonal, solo emite la nueva).
-  const aimDpad = (x: number, y: number) => {
-    const rect = dpadRectRef.current;
-    if (!rect) return;
-    const { disabled: off } = propsRef.current;
-    const next = new Set(arrowsAt(rect, x, y).filter((a) => !off?.[a]));
-    const held = dpadHeldRef.current;
-    for (const arrow of [...held]) {
-      if (next.has(arrow)) continue;
-      held.delete(arrow);
-      release(arrow);
-    }
-    for (const arrow of next) {
-      if (held.has(arrow)) continue;
-      held.add(arrow);
-      press(arrow);
-    }
-  };
 
   const onDpadDown = (ev: PointerEvent<HTMLDivElement>) => {
     if (!propsRef.current.active || dpadPointerRef.current !== null) return;
     ev.preventDefault();
-    capture(ev.currentTarget, ev.pointerId);
     const box = ev.currentTarget.getBoundingClientRect();
     dpadPointerRef.current = ev.pointerId;
     dpadRectRef.current = {
@@ -269,43 +333,27 @@ export function TouchControls(props: TouchControlsProps) {
     aimDpad(ev.clientX, ev.clientY);
   };
 
-  const onDpadMove = (ev: PointerEvent<HTMLDivElement>) => {
-    if (ev.pointerId !== dpadPointerRef.current) return;
-    if (!propsRef.current.active) return;
-    aimDpad(ev.clientX, ev.clientY);
-  };
-
-  // pointerup, pointercancel y lostpointercapture del dedo del D-pad.
-  const onDpadEnd = (ev: PointerEvent<HTMLDivElement>) => {
-    if (ev.pointerId !== dpadPointerRef.current) return;
-    dpadPointerRef.current = null;
-    dpadRectRef.current = null;
-    const held = dpadHeldRef.current;
-    for (const arrow of [...held]) {
-      held.delete(arrow);
-      release(arrow);
-    }
-  };
-
   // --- Pausa: usa pause()/resume() del juego vía onPauseToggle ---------------
 
   const onPauseDown = (ev: PointerEvent<HTMLButtonElement>) => {
     if (!propsRef.current.pauseEnabled) return;
-    capture(ev.currentTarget, ev.pointerId);
+    ev.preventDefault();
+    pausePointerRef.current = ev.pointerId;
     ev.currentTarget.setAttribute("data-pressed", "");
-  };
-  const onPauseEnd = (ev: PointerEvent<HTMLButtonElement>) => {
-    ev.currentTarget.removeAttribute("data-pressed");
   };
   const onPauseClick = (ev: MouseEvent<HTMLButtonElement>) => {
     // Suelta el foco para que Espacio / Enter no vuelvan a pulsarlo.
     ev.currentTarget.blur();
+    // Toque y ratón ya se confirmaron en pointerup; aquí solo el teclado
+    // (detail === 0), para no pausar y reanudar con el mismo toque.
+    if (ev.detail !== 0) return;
     if (!propsRef.current.pauseEnabled) return;
     propsRef.current.onPauseToggle();
   };
 
   return (
     <div
+      ref={rootRef}
       className="touch-controls"
       data-active={active ? "true" : "false"}
       onContextMenu={(ev) => ev.preventDefault()}
@@ -315,10 +363,6 @@ export function TouchControls(props: TouchControlsProps) {
         role="group"
         aria-label="Cruceta"
         onPointerDown={onDpadDown}
-        onPointerMove={onDpadMove}
-        onPointerUp={onDpadEnd}
-        onPointerCancel={onDpadEnd}
-        onLostPointerCapture={onDpadEnd}
       >
         {ARROWS.map((arrow) => (
           <span
@@ -342,9 +386,6 @@ export function TouchControls(props: TouchControlsProps) {
         aria-label={paused ? "Reanudar" : "Pausa"}
         aria-disabled={!pauseEnabled}
         onPointerDown={onPauseDown}
-        onPointerUp={onPauseEnd}
-        onPointerCancel={onPauseEnd}
-        onLostPointerCapture={onPauseEnd}
         onClick={onPauseClick}
       >
         {paused ? "▶" : "❚❚"}
@@ -364,9 +405,6 @@ export function TouchControls(props: TouchControlsProps) {
             aria-label={AB_LABEL[button]}
             aria-disabled={Boolean(disabled?.[button])}
             onPointerDown={onButtonDown}
-            onPointerUp={onButtonEnd}
-            onPointerCancel={onButtonEnd}
-            onLostPointerCapture={onButtonEnd}
           >
             {button.toUpperCase()}
           </button>
