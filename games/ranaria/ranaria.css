@@ -1,0 +1,243 @@
+/* RANARIA — estilos del área del juego (SPEC 13).
+   Todas las reglas cuelgan de .ranaria-root para no afectar a otras páginas.
+   El canvas tiene resolución interna fija 640×560 y se escala por CSS dentro
+   de .crt-screen, que aquí pasa de 4:3 (app/globals.css) a 8:7.
+   Acento verde: el color del catálogo y de la rana. */
+
+.ranaria-root {
+  --g-overlay-bg: rgba(5, 5, 12, 0.78);
+  --g-accent: var(--green);
+  --g-accent-glow: rgba(0, 255, 136, 0.45);
+  --g-kbd-bg: #0d0d1a;
+  --g-kbd-border: rgba(0, 255, 136, 0.25);
+  --g-text: var(--ink-dim);
+  /* Alto ocupado por nav, HUD, márgenes y la barra del CRT: el marco se
+     estrecha para que el campo 8:7 quepa entero en pantallas bajas. */
+  --g-chrome: 380px;
+  /* Proporción W/H del campo (640 / 560 = 8 / 7) para el layout móvil
+     compartido (SPEC 11). */
+  --crt-ar: 1.142857;
+}
+
+/* ---- Skins (data-skin en el root; el canvas toma su paleta de skins.ts) ---- */
+.ranaria-root[data-skin="neon"] {
+  --g-overlay-bg: rgba(0, 0, 0, 0.82);
+  --g-accent: #39ff14;
+  --g-accent-glow: rgba(57, 255, 20, 0.85);
+  --g-kbd-bg: #000a00;
+  --g-kbd-border: rgba(57, 255, 20, 0.5);
+}
+
+.ranaria-root[data-skin="neon"] .crt-screen {
+  background: #000000;
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.35);
+}
+
+.ranaria-root[data-skin="retro"] {
+  --g-overlay-bg: rgba(15, 15, 27, 0.88);
+  --g-accent: #5ac54f;
+  --g-accent-glow: transparent;
+  --g-kbd-bg: #0f0f1b;
+  --g-kbd-border: #5ac54f;
+}
+
+.ranaria-root[data-skin="retro"] .crt-screen {
+  background: #0f0f1b;
+}
+
+/* Retro: "píxeles" nítidos al escalar, scanlines CRT más marcadas y sin
+   desenfoque en los overlays. */
+.ranaria-root[data-skin="retro"] .ranaria-canvas {
+  image-rendering: pixelated;
+}
+
+.ranaria-root[data-skin="retro"] .crt-screen::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.42) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+.ranaria-root[data-skin="retro"] .ranaria-overlay {
+  backdrop-filter: none;
+}
+
+.ranaria-root[data-skin="retro"] .ranaria-select,
+.ranaria-root[data-skin="retro"] kbd {
+  border-radius: 0;
+}
+
+/* ---- Marco y canvas ---- */
+.ranaria-root .crt {
+  width: 100%;
+  max-width: max(320px, calc((100svh - var(--g-chrome)) * 8 / 7 + 48px));
+  margin-inline: auto;
+}
+
+/* Campo 640×560: pantalla 8:7 en lugar del 4:3 de la plataforma. */
+.ranaria-root .crt-screen {
+  aspect-ratio: 8 / 7;
+}
+
+/* La viñeta del CRT (::before) queda sobre el canvas; las scanlines (::after)
+   ya lo están por orden del DOM. */
+.ranaria-root .crt-screen::before {
+  z-index: 1;
+}
+
+.ranaria-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Overlays (inicio y pausa) sobre el campo ---- */
+.ranaria-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* por encima del canvas, la viñeta y las scanlines */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--g-overlay-bg);
+  backdrop-filter: blur(2px);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.ranaria-overlay-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--g-accent);
+  text-shadow: 0 0 10px var(--g-accent-glow);
+}
+
+.ranaria-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--g-text);
+}
+
+.ranaria-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(240px, 100%);
+}
+
+.ranaria-root .btn:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Lista de controles ---- */
+.ranaria-controls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--g-text);
+}
+
+.ranaria-controls li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranaria-controls .keys {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ranaria-menu .ranaria-controls {
+  margin-bottom: 8px;
+}
+
+.ranaria-root kbd {
+  padding: 1px 6px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Bajo el CRT, los controles y el selector de skin van en una fila centrada. */
+.ranaria-skin-row {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 32px;
+}
+
+.ranaria-skin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranaria-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.ranaria-select {
+  height: 30px;
+  padding: 0 8px;
+  background: var(--g-kbd-bg);
+  border: 1px solid var(--g-kbd-border);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ranaria-select:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+.ranaria-help .ranaria-controls {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  font-size: 12px;
+}
+
+/* ---- Móvil (vertical ≤ 840 px y horizontal bajo) ----
+   HUD compacto, marco y tamaño del CRT vienen del layout compartido de
+   app/globals.css (SPEC 11): aquí no se redefinen. Solo ajustes propios. */
+@media (max-width: 840px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 500px) {
+  .ranaria-select {
+    height: var(--tap-min);
+  }
+  .ranaria-overlay {
+    gap: 10px;
+  }
+  .ranaria-overlay-title {
+    font-size: 14px;
+  }
+}

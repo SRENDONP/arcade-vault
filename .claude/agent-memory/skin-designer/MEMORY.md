@@ -12,7 +12,10 @@ Diseñador de skins de Arcade Vault. Estado por juego en [auditoria.md](auditori
 ## Estado general
 
 - 2026-11-08, primera auditoría: CAÍDA `parcial` (falta `clasico`); ROCAS, BLOQUE BUSTER y SERPENTINA `no cumple` (sin skins).
-- 2026-11-08: los cinco de `PLAYABLE` (rocas, caida, serpentina, bloque-buster, duelo-pixel) `cumple`. Nada pendiente. duelo-pixel llegó con skins de su spec (solo auditado).
+- 2026-11-08: los cinco de `PLAYABLE` (rocas, caida, serpentina, bloque-buster, duelo-pixel) `cumple`. duelo-pixel llegó con skins de su spec (solo auditado).
+- 2026-11-11: ranaria `cumple` (fase 5 de SPEC 13). Seis juegos, nada pendiente.
+- Retro con formas rotadas/curvas (ranaria): mejor pixelar la escena entera (lienzo auxiliar → reducción nearest → cuantizar a la paleta → ampliar) que rasterizar forma a forma.
+- Capturas en pausa con `backdrop-filter` salen espejadas en Playwright: es artefacto de captura, no del canvas.
 - Ojo en juegos con teclas mantenidas (`pressedRef` leído por el bucle, p. ej. ROCAS): la guardia del `<select>` va antes de `pressed.add`, no después de las fases como en CAÍDA; si no, ↑ en el selector propulsa.
 - Registro público del estado en `references/game-with-themes.md` (actualizar tras cada auditoría/implementación).
 - `npx prettier --write games/<id>` reescribe el fin de línea de `core.ts`: formatea solo los archivos tocados o restaura `core.ts` con `git checkout`.
