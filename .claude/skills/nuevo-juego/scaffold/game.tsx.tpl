@@ -15,7 +15,13 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import {
+  createTouchInput,
+  type TouchInputState,
+  type TouchPressEvent,
+} from "@/lib/touch-input";
 import {
   createState,
   H,
@@ -53,17 +59,23 @@ const ENTER_KEYS = new Set(["Enter", "NumpadEnter"]);
 
 const NO_INPUT: __Pascal__Input = { left: false, right: false, action: false };
 
-// TODO: traducir teclas a la entrada del motor.
+// TODO: traducir teclas y controles táctiles mantenidos a la entrada del
+// motor (teclado OR táctil).
 function readInput(
   held: (code: string) => boolean,
   pulsed: (code: string) => boolean,
+  touch: TouchInputState,
 ): __Pascal__Input {
   return {
-    left: held("ArrowLeft"),
-    right: held("ArrowRight"),
+    left: held("ArrowLeft") || touch.left,
+    right: held("ArrowRight") || touch.right,
     action: pulsed("Space"),
   };
 }
+
+// TODO: controles táctiles sin uso en este juego (se ven atenuados). Si alguno
+// repite al mantenerlo, pasa también repeat={{ left: { delay: 170, interval: 50 } }}.
+const TOUCH_DISABLED = { b: true } as const;
 
 const statsOf = (s: __Pascal__State): RunStats => ({
   score: s.score,
@@ -105,6 +117,11 @@ export function __Pascal__Game({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Pulsaciones pendientes para el próximo frame (una acción por pulsación).
   const pulsesRef = useRef(new Set<string>());
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
 
   const goTo = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -214,7 +231,9 @@ export function __Pascal__Game({ game }: PlayableProps) {
         pressedRef.current.has(code) && !suppressedRef.current.has(code);
       const pulsed = (code: string) => pulsesRef.current.has(code);
       const input =
-        phaseRef.current === "playing" ? readInput(held, pulsed) : NO_INPUT;
+        phaseRef.current === "playing"
+          ? readInput(held, pulsed, touch.state)
+          : NO_INPUT;
       pulsesRef.current.clear();
 
       step(s, dt, input);
@@ -230,7 +249,7 @@ export function __Pascal__Game({ game }: PlayableProps) {
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [phase, draw, sync, goTo]);
+  }, [phase, draw, sync, goTo, touch]);
 
   // Teclado y foco de la ventana: un solo juego de listeners por montaje.
   useEffect(() => {
@@ -336,6 +355,13 @@ export function __Pascal__Game({ game }: PlayableProps) {
     };
   }, [pause, resume, showPauseView, startRun]);
 
+  // TODO: acciones táctiles de un toque. A equivale a Espacio (una acción por
+  // toque, sin repetición); lo mantenido se lee de touch.state en readInput.
+  const onTouchPress = useCallback((ev: TouchPressEvent) => {
+    if (phaseRef.current !== "playing" || ev.repeated) return;
+    if (ev.button === "a") pulsesRef.current.add("Space");
+  }, []);
+
   const inRun = phase === "playing" || phase === "paused";
 
   return (
@@ -420,9 +446,6 @@ export function __Pascal__Game({ game }: PlayableProps) {
               <p className="__id__-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -473,6 +496,16 @@ export function __Pascal__Game({ game }: PlayableProps) {
           <span>NIVEL {pad2(stats.level)}</span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        disabled={TOUCH_DISABLED}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       <section className="__id__-help" aria-label="Controles">
         <ControlsList />

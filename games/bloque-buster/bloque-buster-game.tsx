@@ -12,7 +12,9 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
 import {
   createState,
   H,
@@ -197,6 +199,11 @@ export function BloqueBusterGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Acción pendiente para el próximo frame (Espacio o clic: una por pulsación).
   const actionRef = useRef(false);
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
   // X lógica del cursor desde el último frame, o null si no se movió.
   const mouseXRef = useRef<number | null>(null);
   // Sonidos precargados; se crean en un efecto (solo en el navegador).
@@ -362,8 +369,9 @@ export function BloqueBusterGame({ game }: PlayableProps) {
       const input: BloqueBusterInput =
         phaseRef.current === "playing"
           ? {
-              left: held(LEFT_KEYS),
-              right: held(RIGHT_KEYS),
+              // Teclado o D-pad táctil (OR).
+              left: held(LEFT_KEYS) || touch.state.left,
+              right: held(RIGHT_KEYS) || touch.state.right,
               mouseX: mouseXRef.current,
               action: actionRef.current,
             }
@@ -387,7 +395,7 @@ export function BloqueBusterGame({ game }: PlayableProps) {
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [phase, clearPending, draw, goTo, playEvents, sync]);
+  }, [phase, clearPending, draw, goTo, playEvents, sync, touch]);
 
   // Teclado y foco de la ventana: un solo juego de listeners por montaje.
   useEffect(() => {
@@ -524,6 +532,13 @@ export function BloqueBusterGame({ game }: PlayableProps) {
     if (engineRef.current?.state === "serve") actionRef.current = true;
   };
 
+  // A o B táctil: una acción (lanzar) por toque, como Espacio sin
+  // autorrepetición. ← / → se leen del estado en el bucle.
+  const onTouchPress = useCallback((ev: TouchPressEvent) => {
+    if (phaseRef.current !== "playing" || ev.repeated) return;
+    if (ev.button === "a" || ev.button === "b") actionRef.current = true;
+  }, []);
+
   const inRun = phase === "playing" || phase === "paused";
 
   return (
@@ -612,9 +627,6 @@ export function BloqueBusterGame({ game }: PlayableProps) {
               <p className="bloque-buster-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -687,6 +699,15 @@ export function BloqueBusterGame({ game }: PlayableProps) {
           <span>NIVEL {pad2(stats.level)}</span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       <section
         className="bloque-buster-help bloque-buster-skin-row"

@@ -34,6 +34,9 @@
   /* Layout móvil (SPEC 11) */
   --player-reserve: 0px; /* alto reservado bajo el CRT; el spec táctil lo sube */
   --tap-min: 44px; /* tamaño mínimo de un objetivo táctil */
+  /* Controles táctiles (SPEC 12) */
+  --touch-btn: 56px; /* lado de A, B y cada flecha del D-pad (mínimo 48px) */
+  --touch-strip-h: calc(3 * var(--touch-btn) + 24px); /* alto de la franja vertical */
 }
 
 /* Expose the palette and fonts as Tailwind utilities (bg-bg-2, text-cyan, font-pixel, ...) */
@@ -363,27 +366,6 @@
   }
   .chip.active { color: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 10px rgba(255,0,110,0.35); }
   .chip:hover:not(.active) { color: var(--ink); }
-
-  /* ===== aviso táctil (SPEC 11) =====
-     Solo en dispositivos cuyo único puntero es táctil (sin ratón ni trackpad).
-     Puro CSS: sin detección en JS ni parpadeo al hidratar. */
-  .touch-notice { display: none; }
-  @media (pointer: coarse) and (not (any-pointer: fine)) {
-    .touch-notice {
-      display: block;
-      max-width: 260px;
-      margin: 0;
-      padding: 6px 10px;
-      border: 1px dashed var(--yellow);
-      font-family: var(--mono);
-      font-size: 11px;
-      line-height: 1.4;
-      letter-spacing: 0.04em;
-      text-align: center;
-      color: var(--yellow);
-      background: rgba(10, 10, 15, 0.7);
-    }
-  }
 
   /* ===== objetivos táctiles (< 840 px y móvil en horizontal) =====
      Mínimo de --tap-min sin agrandar la tipografía pixel: solo crece la caja. */
@@ -1516,5 +1498,206 @@
     padding: var(--crt-pad);
     max-width: calc((100dvh - var(--player-chrome) - var(--player-reserve)) * var(--crt-ar) + 2 * var(--crt-pad));
     margin-inline: auto;
+  }
+}
+
+/* ===== Controles táctiles (SPEC 12) =====
+   components/touch-controls.tsx, hijo directo de .av-player justo después del
+   .crt. Solo en dispositivos cuyo único puntero es táctil, la misma condición
+   que usaba el aviso de SPEC 11: puro CSS, sin detección en JS. En escritorio
+   no se ve ni reserva espacio.
+   Partes: .tc-dpad (cruceta 3×3), .tc-pause y .tc-ab (B abajo-izquierda,
+   A arriba-derecha). Ningún control se coloca sobre .crt-screen:
+     vertical    franja bajo el CRT; --player-reserve sube a su alto
+     horizontal  columnas a los lados del CRT (HUD + D-pad | pausa + A/B)
+   --sai-* son las safe areas; se pueden sobrescribir para simularlas. */
+.touch-controls { display: none; }
+
+@media (pointer: coarse) and (not (any-pointer: fine)) {
+  :root {
+    --sai-left: env(safe-area-inset-left, 0px);
+    --sai-right: env(safe-area-inset-right, 0px);
+    --sai-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* --- Franja (por defecto; vertical y tablets) --- */
+  .touch-controls {
+    display: grid;
+    grid-template-columns: auto minmax(var(--touch-btn), 1fr) auto;
+    grid-template-areas: "dpad pause ab";
+    align-items: end;
+    gap: 12px;
+    padding: 12px var(--sai-right) calc(12px + var(--sai-bottom)) var(--sai-left);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .touch-controls * {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* --- Aspecto común: borde y glow como .btn / .crt --- */
+  .tc-arrow,
+  .tc-btn,
+  .tc-pause {
+    --tc-color: var(--cyan);
+    --tc-glow: rgba(0, 245, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-btn);
+    height: var(--touch-btn);
+    padding: 0;
+    font-family: var(--pixel);
+    color: var(--tc-color);
+    background: var(--bg-2);
+    border: 1px solid var(--tc-color);
+    box-shadow: 0 0 6px var(--tc-glow), inset 0 0 6px rgba(0, 0, 0, 0.6);
+    transition: transform 60ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .tc-arrow[data-pressed],
+  .tc-btn[data-pressed],
+  .tc-pause[data-pressed] {
+    background: var(--bg-3);
+    box-shadow: 0 0 18px var(--tc-glow), 0 0 4px var(--tc-color), inset 0 0 12px var(--tc-glow);
+    transform: scale(0.94);
+  }
+  .tc-arrow[data-disabled],
+  .tc-btn[aria-disabled="true"],
+  .tc-pause[aria-disabled="true"] {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+  /* Fuera de partida los controles de juego no responden: se ven apagados. */
+  .touch-controls[data-active="false"] .tc-dpad,
+  .touch-controls[data-active="false"] .tc-ab {
+    filter: saturate(0.5) brightness(0.8);
+  }
+
+  /* D-pad: zona única de 3×3 botones; las flechas forman la cruz. */
+  .tc-dpad {
+    grid-area: dpad;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, var(--touch-btn));
+    grid-template-rows: repeat(3, var(--touch-btn));
+    grid-template-areas: ". up ." "left hub right" ". down .";
+  }
+  .tc-dpad::before {
+    /* centro de la cruz (zona muerta) */
+    content: "";
+    grid-area: hub;
+    margin: 6px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    border-radius: 50%;
+  }
+  .tc-arrow { font-size: 14px; }
+  .tc-up { grid-area: up; border-radius: 8px 8px 2px 2px; }
+  .tc-down { grid-area: down; border-radius: 2px 2px 8px 8px; }
+  .tc-left { grid-area: left; border-radius: 8px 2px 2px 8px; }
+  .tc-right { grid-area: right; border-radius: 2px 8px 8px 2px; }
+
+  /* Pausa, centrada arriba de la franja. */
+  .tc-pause {
+    grid-area: pause;
+    align-self: start;
+    justify-self: center;
+    font-size: 18px;
+    letter-spacing: -0.1em;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  /* A y B en diagonal: B abajo-izquierda, A arriba-derecha. */
+  .tc-ab {
+    grid-area: ab;
+    position: relative;
+    width: calc(1.75 * var(--touch-btn));
+    height: calc(2 * var(--touch-btn) + 8px);
+  }
+  .tc-btn {
+    position: absolute;
+    font-size: 16px;
+    color: var(--ink);
+    border-width: 2px;
+    border-radius: 50%;
+    text-shadow: 0 0 6px var(--tc-glow);
+  }
+  .tc-a {
+    --tc-color: var(--magenta);
+    --tc-glow: rgba(255, 0, 110, 0.6);
+    top: 0;
+    right: 0;
+  }
+  .tc-b {
+    --tc-color: var(--yellow);
+    --tc-glow: rgba(245, 255, 0, 0.55);
+    bottom: 0;
+    left: 0;
+  }
+
+  /* --- Vertical: la franja se reserva bajo el CRT --- */
+  @media (max-width: 840px) and (orientation: portrait) {
+    /* El padding de 16px del reproductor ya cubre parte del inset lateral:
+       la franja solo añade lo que falte. */
+    :root {
+      --tc-inset-l: max(0px, calc(var(--sai-left) - 16px));
+      --tc-inset-r: max(0px, calc(var(--sai-right) - 16px));
+      /* A 360 px no caben 5,75 botones de 56 px: se encogen, nunca bajo 48 px. */
+      --touch-btn: clamp(48px, calc((100vw - 32px - 24px - var(--tc-inset-l) - var(--tc-inset-r)) / 5.75), 56px);
+    }
+    .av-player {
+      --player-reserve: calc(var(--touch-strip-h) + var(--sai-bottom));
+    }
+    .touch-controls {
+      padding-left: var(--tc-inset-l);
+      padding-right: var(--tc-inset-r);
+    }
+  }
+
+  /* --- Horizontal: columnas a los lados del CRT --- */
+  @media (orientation: landscape) and (max-height: 500px) {
+    :root { --touch-btn: clamp(48px, calc((100dvh - 24px) / 7.5), 56px); }
+    .av-player {
+      /* El CRT deja libre el inset inferior: así ninguna celda baja hasta él. */
+      --player-reserve: var(--sai-bottom);
+      grid-template-columns:
+        calc(3 * var(--touch-btn))
+        minmax(0, 1fr)
+        calc(1.75 * var(--touch-btn));
+      grid-template-rows: auto 1fr;
+      padding-left: max(16px, var(--sai-left));
+      padding-right: max(16px, var(--sai-right));
+      padding-bottom: max(16px, var(--sai-bottom));
+    }
+    .av-player > .player-hud { grid-row: 1; }
+    .av-player > .crt { grid-row: 1 / span 2; }
+    /* El HUD comparte columna con el D-pad: stats en dos columnas y botones
+       en fila. */
+    .av-player .player-hud { gap: 6px; padding: 6px; }
+    .av-player .player-hud > div:first-child {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+    }
+    .av-player .hud-actions { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .av-player .hud-actions > .btn {
+      flex: 1 1 calc(50% - 4px);
+      min-width: 0;
+      padding-inline: 4px;
+      font-size: 8px;
+      letter-spacing: 0.04em;
+    }
+    /* Los controles salen del flujo de la franja: cada parte es una celda. */
+    .touch-controls { display: contents; }
+    .tc-dpad { grid-column: 1; grid-row: 2; align-self: end; }
+    .tc-pause { grid-column: 3; grid-row: 1; align-self: start; justify-self: center; }
+    .tc-ab { grid-column: 3; grid-row: 2; align-self: end; justify-self: end; }
   }
 }

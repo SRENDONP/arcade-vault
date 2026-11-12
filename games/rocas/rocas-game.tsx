@@ -13,7 +13,9 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
 import {
   createState,
   H,
@@ -145,6 +147,11 @@ export function RocasGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Disparo pendiente para el próximo frame (una bala por pulsación).
   const fireRef = useRef(false);
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
   // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
   const skinRef = useRef(getSkin(skin));
 
@@ -263,9 +270,10 @@ export function RocasGame({ game }: PlayableProps) {
       const input: RocasInput =
         phaseRef.current === "playing"
           ? {
-              left: held("ArrowLeft"),
-              right: held("ArrowRight"),
-              thrust: held("ArrowUp"),
+              // Teclado o controles táctiles (OR); empuje con ↑ o con B.
+              left: held("ArrowLeft") || touch.state.left,
+              right: held("ArrowRight") || touch.state.right,
+              thrust: held("ArrowUp") || touch.state.up || touch.state.b,
               fire: fireRef.current,
             }
           : NO_INPUT;
@@ -284,7 +292,7 @@ export function RocasGame({ game }: PlayableProps) {
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [phase, draw, sync, goTo]);
+  }, [phase, draw, sync, goTo, touch]);
 
   // Teclado y foco de la ventana: un solo juego de listeners por montaje.
   useEffect(() => {
@@ -399,6 +407,13 @@ export function RocasGame({ game }: PlayableProps) {
     };
   }, [pause, resume, showPauseView, startRun]);
 
+  // Botón A táctil: una bala por toque, como Espacio sin autorrepetición.
+  // Girar y empujar se leen del estado en el bucle.
+  const onTouchPress = useCallback((ev: TouchPressEvent) => {
+    if (phaseRef.current !== "playing" || ev.repeated) return;
+    if (ev.button === "a") fireRef.current = true;
+  }, []);
+
   const inRun = phase === "playing" || phase === "paused";
 
   return (
@@ -482,9 +497,6 @@ export function RocasGame({ game }: PlayableProps) {
               <p className="rocas-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -535,6 +547,15 @@ export function RocasGame({ game }: PlayableProps) {
           <span>NIVEL {pad2(stats.level)}</span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       <div className="rocas-skin-row">
         <section className="rocas-help" aria-label="Controles">

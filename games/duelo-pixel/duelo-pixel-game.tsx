@@ -12,7 +12,9 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
 import {
   createState,
   H,
@@ -119,6 +121,9 @@ function setSkin(skin: SkinName) {
   skinListeners.forEach((l) => l());
 }
 
+// Controles táctiles (SPEC 12): B no se usa en DUELO PIXEL.
+const TOUCH_DISABLED = { b: true } as const;
+
 // Tras un clic, el botón suelta el foco para que Espacio (plasma) no lo vuelva a pulsar.
 const blurTarget = (ev: MouseEvent<HTMLElement>) => ev.currentTarget.blur();
 
@@ -153,6 +158,11 @@ export function DueloPixelGame({ game }: PlayableProps) {
   const suppressedRef = useRef(new Set<string>());
   // Plasma pendiente para el próximo frame (una vez por pulsación de Espacio).
   const plasmaRef = useRef(false);
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
   // Skin activo para el bucle y draw(); lo actualiza el efecto [skin, draw].
   const skinRef = useRef(getSkin(skin));
 
@@ -272,8 +282,9 @@ export function DueloPixelGame({ game }: PlayableProps) {
       const input: DueloPixelInput =
         phaseRef.current === "playing"
           ? {
-              up: held(UP_KEYS),
-              down: held(DOWN_KEYS),
+              // Teclado o D-pad táctil (OR).
+              up: held(UP_KEYS) || touch.state.up,
+              down: held(DOWN_KEYS) || touch.state.down,
               plasma: plasmaRef.current,
             }
           : NO_INPUT;
@@ -291,7 +302,7 @@ export function DueloPixelGame({ game }: PlayableProps) {
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [phase, draw, goTo, sync]);
+  }, [phase, draw, goTo, sync, touch]);
 
   // Teclado y foco de la ventana: un solo juego de listeners por montaje.
   useEffect(() => {
@@ -406,6 +417,13 @@ export function DueloPixelGame({ game }: PlayableProps) {
     };
   }, [pause, resume, showPauseView, startRun]);
 
+  // Botón A táctil: un golpe de plasma por toque, como Espacio sin
+  // autorrepetición. ↑ / ↓ se leen del estado en el bucle.
+  const onTouchPress = useCallback((ev: TouchPressEvent) => {
+    if (phaseRef.current !== "playing" || ev.repeated) return;
+    if (ev.button === "a") plasmaRef.current = true;
+  }, []);
+
   const inRun = phase === "playing" || phase === "paused";
 
   return (
@@ -501,9 +519,6 @@ export function DueloPixelGame({ game }: PlayableProps) {
               <p className="duelo-pixel-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -559,6 +574,16 @@ export function DueloPixelGame({ game }: PlayableProps) {
           </span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        disabled={TOUCH_DISABLED}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       <section className="duelo-pixel-help" aria-label="Controles">
         <ControlsList />

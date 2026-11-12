@@ -13,7 +13,9 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
+import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
 import {
   clampStartLevel,
   collide,
@@ -89,6 +91,15 @@ const GAME_KEYS = new Set([
 ]);
 const PAUSE_KEYS = new Set(["KeyP", "Escape"]);
 const ENTER_KEYS = new Set(["Enter", "NumpadEnter"]);
+
+// Controles táctiles (SPEC 12): ← → ↓ se repiten mientras se mantienen,
+// como la autorrepetición del teclado.
+const TOUCH_REPEAT_MS = { delay: 170, interval: 50 };
+const TOUCH_REPEAT = {
+  left: TOUCH_REPEAT_MS,
+  right: TOUCH_REPEAT_MS,
+  down: TOUCH_REPEAT_MS,
+} as const;
 
 function newPiece(gen: Generator): ActivePiece {
   const type = gen.next();
@@ -388,6 +399,11 @@ export function CaidaGame({ game }: PlayableProps) {
   // ignoran hasta soltarlas, para que la autorrepetición no mueva la pieza.
   const pressedRef = useRef(new Set<string>());
   const suppressedRef = useRef(new Set<string>());
+  // Estado de los controles táctiles; lo escribe <TouchControls>. Objeto
+  // mutable y estable (useState perezoso: se pasa en el render, cosa que la
+  // regla react-hooks/refs no permite con un ref) que no se reinicia en la
+  // limpieza de efectos.
+  const [touch] = useState(createTouchInput);
 
   const goTo = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -693,6 +709,40 @@ export function CaidaGame({ game }: PlayableProps) {
     sync,
   ]);
 
+  // Controles táctiles: ← → mueven y ↓ baja (con repetición), ↑ y A rotan y
+  // B hace caída dura (un toque cada uno).
+  const onTouchPress = useCallback(
+    (ev: TouchPressEvent) => {
+      if (phaseRef.current !== "playing") return;
+      const e = engineRef.current;
+      if (!e) return;
+      switch (ev.button) {
+        case "left":
+          moveX(e, -1);
+          break;
+        case "right":
+          moveX(e, 1);
+          break;
+        case "down":
+          softDrop(e);
+          break;
+        case "up":
+        case "a":
+          if (ev.repeated) return;
+          rotate(e);
+          break;
+        case "b":
+          if (ev.repeated) return;
+          hardDrop(e);
+          break;
+      }
+      sync();
+      draw();
+      if (e.over) goTo("over");
+    },
+    [draw, goTo, sync],
+  );
+
   const inRun = phase === "playing" || phase === "paused";
   // Antes de la primera partida el HUD muestra el nivel con el que empezará.
   const hudLevel = phase === "start" ? startLevel : stats.level;
@@ -843,9 +893,6 @@ export function CaidaGame({ game }: PlayableProps) {
               <p className="caida-hint">
                 o pulsa <kbd>Enter</kbd>
               </p>
-              <p className="touch-notice">
-                Controles táctiles próximamente · necesitas un teclado
-              </p>
             </div>
           )}
 
@@ -933,6 +980,16 @@ export function CaidaGame({ game }: PlayableProps) {
           <span>NIVEL {pad2(hudLevel)}</span>
         </div>
       </div>
+
+      <TouchControls
+        input={touch}
+        active={phase === "playing"}
+        repeat={TOUCH_REPEAT}
+        onPress={onTouchPress}
+        paused={phase === "paused"}
+        pauseEnabled={inRun}
+        onPauseToggle={phase === "paused" ? resume : pause}
+      />
 
       {phase === "over" && (
         <GameOverModal

@@ -40,11 +40,17 @@ El nombre visible es "<TÍTULO>"; <la marca "<Original>" no aparece en la UI>.
 - Guardado en Supabase por la vía existente (`submitScore` → `submit_score`); el ranking aparece en `/juegos/<id>` y `/salon?juego=<id>`.
 - Skins en `games/<id>/skins.ts` (§7 de `integracion.md`): Clásico (por defecto), Neón y Retro, con su paleta <qué elemento en qué color en cada skin>, preferencia `av_<id>_skin`, selector y contraste verificado en oscuro.
 - Estilos en `games/<id>/<id>.css`, con todas las reglas bajo `.<id>-root`.
+- Controles táctiles con `TouchControls` (§ Controles táctiles de `integracion.md`), con este mapeo:
+
+  | ↑                                                        | ↓   | ← / → | A                        | B   |
+  | -------------------------------------------------------- | --- | ----- | ------------------------ | --- |
+  | <acción (mantener / un toque / repite) o — (sin efecto)> | <…> | <…>   | <… o sin uso (atenuado)> | <…> |
+
 - <Ajuste del texto `long` si las reglas no coinciden con el catálogo.>
 
 **Fuera de alcance (para futuros specs):**
 
-- Controles táctiles o gestos en móvil.
+- Gestos táctiles (swipe, tocar el canvas).
 - Sonido y música.
 - Guardar datos extra de la partida (<datos de `extra`>) en Supabase.
 - <Preferencias en `localStorage` distintas del skin / skins extra / tema claro, si no se piden.>
@@ -169,7 +175,7 @@ Seguir `.claude/skills/nuevo-juego/integracion.md` y partir de `.claude/skills/n
 - **No:** migración de Supabase. `scores` es común a todos los juegos; los datos de `extra` no se guardan.
 - **No:** récords locales del juego. Duplicaría el ranking.
 - **Sí:** campo lógico fijo <W>×<H> escalado por CSS. La dificultad no depende de la pantalla.
-- **No:** controles táctiles. Van en otro spec.
+- **Sí:** controles táctiles con `TouchControls` y el mapeo de la tabla. El juego se puede jugar en móvil desde el primer día.
 - <Decisiones tomadas en las preguntas, con su motivo.>
 
 ---
@@ -190,7 +196,7 @@ Seguir `.claude/skills/nuevo-juego/integracion.md` y partir de `.claude/skills/n
 
 ## Lo que **no** está en este spec
 
-- Controles táctiles.
+- Gestos táctiles.
 - Sonido.
 - Datos extra de la partida en Supabase.
 - <…>
