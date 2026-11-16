@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { DEFAULT_NAME } from "@/lib/scores";
 import type { Game } from "@/lib/games";
 
 type Run = { score: number; level: number };
@@ -16,7 +17,7 @@ export function GamePlayer({ game }: { game: Game }) {
   const [lives, setLives] = useState(3);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const name = user?.name ?? "INVITADO";
+  const name = user?.alias ?? DEFAULT_NAME;
 
   useEffect(() => {
     if (over || paused) return;
@@ -99,7 +100,12 @@ export function GamePlayer({ game }: { game: Game }) {
       </div>
 
       {over && (
-        <GameOverModal game={game} score={run.score} ranked={false} onRestart={restart} />
+        <GameOverModal
+          game={game}
+          score={run.score}
+          ranked={false}
+          onRestart={restart}
+        />
       )}
     </div>
   );

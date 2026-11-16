@@ -18,7 +18,13 @@ export type GameOverModalProps = {
 
 // "FIN DEL JUEGO" modal shared by every game. It is mounted only while the run
 // is over, so the initials and the save result reset on each new run.
-export function GameOverModal({ game, score, ranked, extra, onRestart }: GameOverModalProps) {
+export function GameOverModal({
+  game,
+  score,
+  ranked,
+  extra,
+  onRestart,
+}: GameOverModalProps) {
   const { user } = useSession();
   // null until the player edits the initials, so a session that loads after
   // hydration still fills in the name.
@@ -26,14 +32,18 @@ export function GameOverModal({ game, score, ranked, extra, onRestart }: GameOve
   const [result, setResult] = useState<SubmitScoreResult | null>(null);
   const [savedName, setSavedName] = useState("");
   const [pending, startTransition] = useTransition();
-  const name = nameInput ?? user?.name ?? DEFAULT_NAME;
+  const name = nameInput ?? user?.alias ?? DEFAULT_NAME;
 
   const save = () => {
     if (pending) return;
     const finalName = normalizeName(name) || DEFAULT_NAME;
     startTransition(async () => {
       try {
-        const res = await submitScore({ gameId: game.id, name: finalName, score });
+        const res = await submitScore({
+          gameId: game.id,
+          name: finalName,
+          score,
+        });
         setSavedName(finalName);
         setResult(res);
       } catch {
@@ -54,20 +64,26 @@ export function GameOverModal({ game, score, ranked, extra, onRestart }: GameOve
             {extra.map((item) => (
               <div key={item.label}>
                 <div className="final-label">{item.label}</div>
-                <div className="pixel mt-1 text-[16px] text-cyan">{item.value}</div>
+                <div className="pixel mt-1 text-[16px] text-cyan">
+                  {item.value}
+                </div>
               </div>
             ))}
           </div>
         )}
 
         {!ranked ? (
-          <div className="save-msg demo">▸ MODO DEMO · ESTA PARTIDA NO PUNTÚA</div>
+          <div className="save-msg demo">
+            ▸ MODO DEMO · ESTA PARTIDA NO PUNTÚA
+          </div>
         ) : result?.status === "saved" ? (
           <>
             <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             <div className="save-rank">
               PUESTO #{result.best.rank}
-              {!result.isNewBest && <> · TU MEJOR: {result.best.score.toLocaleString("es-ES")}</>}
+              {!result.isNewBest && (
+                <> · TU MEJOR: {result.best.score.toLocaleString("es-ES")}</>
+              )}
             </div>
             <Leaderboard rows={result.top} highlight={savedName} />
           </>
@@ -78,15 +94,23 @@ export function GameOverModal({ game, score, ranked, extra, onRestart }: GameOve
                 value={name}
                 maxLength={NAME_MAX}
                 disabled={pending}
-                onChange={(e) => setNameInput(e.target.value.toUpperCase().slice(0, NAME_MAX))}
+                onChange={(e) =>
+                  setNameInput(e.target.value.toUpperCase().slice(0, NAME_MAX))
+                }
                 placeholder="TUS INICIALES"
               />
               <button className="btn yellow" onClick={save} disabled={pending}>
                 {pending ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
               </button>
             </div>
-            {result?.status === "invalid" && <div className="save-msg err">NOMBRE NO VÁLIDO</div>}
-            {result?.status === "error" && <div className="save-msg err">NO SE PUDO GUARDAR · REINTENTAR</div>}
+            {result?.status === "invalid" && (
+              <div className="save-msg err">NOMBRE NO VÁLIDO</div>
+            )}
+            {result?.status === "error" && (
+              <div className="save-msg err">
+                NO SE PUDO GUARDAR · REINTENTAR
+              </div>
+            )}
           </>
         )}
 

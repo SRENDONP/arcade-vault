@@ -1,5 +1,5 @@
 // Preferencias de CAÍDA en localStorage (prefijo av_caida_).
-// Todo acceso va en try/catch, igual que lib/session.ts: si el almacenamiento
+// Todo acceso va en try/catch: si el almacenamiento
 // está bloqueado el juego sigue funcionando y solo deja de persistir.
 
 import { clampStartLevel, MAX_START_LEVEL } from "./core";

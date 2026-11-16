@@ -14,6 +14,27 @@ export type Database = {
   };
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          alias: string | null;
+          created_at: string;
+          id: string;
+          updated_at: string;
+        };
+        Insert: {
+          alias?: string | null;
+          created_at?: string;
+          id: string;
+          updated_at?: string;
+        };
+        Update: {
+          alias?: string | null;
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       scores: {
         Row: {
           created_at: string;
