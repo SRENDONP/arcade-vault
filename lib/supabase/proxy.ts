@@ -4,7 +4,7 @@
 // see the new session and the browser stores it.
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_ROUTES, PROTECTED_PATHS, safeNext } from "@/lib/auth";
+import { aliasPath, AUTH_ROUTES, PROTECTED_PATHS, safeNext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 
 const matches = (pathname: string, route: string) =>
@@ -60,7 +60,15 @@ export async function updateSession(
     signedIn &&
     (pathname === AUTH_ROUTES.signIn || pathname === AUTH_ROUTES.recover)
   ) {
-    return redirectTo(safeNext(searchParams.get("next"), AUTH_ROUTES.account));
+    const next = safeNext(searchParams.get("next"), AUTH_ROUTES.account);
+    // A player without an alias chooses it first, as after signing in;
+    // otherwise /auth?next=… would let them skip it and play as INVITADO.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("alias")
+      .eq("id", String(data?.claims?.sub))
+      .maybeSingle();
+    return redirectTo(profile?.alias ? next : aliasPath(next));
   }
 
   if (!signedIn && pathname === AUTH_ROUTES.newPassword) {

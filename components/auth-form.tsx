@@ -8,6 +8,7 @@ import {
   aliasPath,
   AUTH_ROUTES,
   authErrorMessage,
+  authNotice,
   PASSWORD_MIN,
   safeNext,
   validateEmail,
@@ -42,6 +43,10 @@ export function AuthForm() {
       ? authErrorMessage(params.get("error") ?? undefined)
       : null,
   );
+  // ?aviso= from the callback (e.g. the account was confirmed in another browser).
+  const [notice, setNotice] = useState<string | null>(
+    authNotice(params.get("aviso")),
+  );
   // Email the confirmation link was sent to; shows "REVISA TU CORREO".
   const [sentTo, setSentTo] = useState<string | null>(null);
 
@@ -64,6 +69,7 @@ export function AuthForm() {
       return setError("LAS CONTRASEÑAS NO COINCIDEN");
 
     setError(null);
+    setNotice(null);
     setPending("submit");
     const supabase = createClient();
     try {
@@ -240,6 +246,11 @@ export function AuthForm() {
           {error && (
             <div className="auth-msg error" role="alert">
               ▸ {error}
+            </div>
+          )}
+          {notice && !error && (
+            <div className="auth-msg" role="status">
+              ▸ {notice}
             </div>
           )}
 

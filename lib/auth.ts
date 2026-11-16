@@ -118,10 +118,25 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   email_not_confirmed: "CONFIRMA TU CORREO ANTES DE ENTRAR",
   weak_password: "CONTRASEÑA DEMASIADO DÉBIL",
   over_email_send_rate_limit: "DEMASIADOS CORREOS · PRUEBA MÁS TARDE",
+  over_request_rate_limit: "DEMASIADOS INTENTOS · ESPERA UN MOMENTO",
+  email_address_invalid: "ESE EMAIL NO SE ACEPTA · USA OTRO",
+  email_address_not_authorized: "ESE EMAIL NO SE ACEPTA · USA OTRO",
+  signup_disabled: "EL REGISTRO ESTÁ CERRADO AHORA MISMO",
+  user_banned: "ESTA CUENTA ESTÁ BLOQUEADA",
+  recovery_other_browser: "ABRE EL ENLACE EN EL NAVEGADOR DONDE LO PEDISTE",
   same_password: "LA CONTRASEÑA ES IGUAL A LA ANTERIOR",
   "23505": "ESE ALIAS YA ESTÁ EN USO",
   callback: "NO SE PUDO COMPLETAR EL ACCESO",
 };
+
+// Informative notices for /auth?aviso=… (not errors).
+const AUTH_NOTICES: Record<string, string> = {
+  confirmada: "CUENTA CONFIRMADA · INICIA SESIÓN CON TU EMAIL Y CONTRASEÑA",
+};
+
+export function authNotice(code: string | null | undefined): string | null {
+  return (code && AUTH_NOTICES[code]) || null;
+}
 
 export function authErrorMessage(code: string | undefined): string {
   return (

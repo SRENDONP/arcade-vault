@@ -20,6 +20,17 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error?.code === "pkce_code_verifier_not_found") {
+    // The link was opened in another browser (or app) than the one that asked
+    // for it, so there is no PKCE verifier here. Supabase already verified the
+    // email before sending us the code: the account is active, it only needs
+    // signing in. A recovery link, instead, must be reopened where it was asked.
+    const target =
+      next === AUTH_ROUTES.newPassword
+        ? `${AUTH_ROUTES.signIn}?error=recovery_other_browser`
+        : `${AUTH_ROUTES.signIn}?aviso=confirmada&next=${encodeURIComponent(next)}`;
+    return NextResponse.redirect(new URL(target, origin));
+  }
   if (error || !data.user) {
     console.error("[auth] callback:", error?.code ?? "no user");
     return fail();
