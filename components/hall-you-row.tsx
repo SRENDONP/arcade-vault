@@ -5,9 +5,10 @@ import { useSession } from "@/components/session-provider";
 import { formatScoreDate, normalizeName, type PlayerBest } from "@/lib/scores";
 import { createClient } from "@/lib/supabase/client";
 
-// "Your best" row: real rank and best mark of the player's alias in this game.
-// The session lives in the browser, so the lookup runs there too. Hidden
-// without a session or alias, while loading, on error, or with no marks.
+// "Your best" row: real rank and best mark of the signed-in player in this
+// game (my_best reads auth.uid()). The session lives in the browser, so the
+// lookup runs there too. Hidden without a session or alias, while loading, on
+// error, or with no marks.
 export function HallYouRow({
   gameId,
   title,
@@ -18,27 +19,24 @@ export function HallYouRow({
   delay: number;
 }) {
   const { user } = useSession();
+  const userId = user?.id ?? null;
   const name = user?.alias ?? null;
-  // Tagged with the query it answers, so switching game or name never shows a stale row.
+  // Tagged with the query it answers, so switching game or user never shows a stale row.
   const [result, setResult] = useState<{
     key: string;
     best: PlayerBest | null;
   } | null>(null);
-  const key = `${gameId}|${name ?? ""}`;
+  const key = `${gameId}|${userId ?? ""}`;
 
   useEffect(() => {
-    if (!name) return;
+    if (!userId || !name) return;
     let active = true;
     createClient()
-      .rpc("player_best", { p_game_id: gameId, p_name: name })
+      .rpc("my_best", { p_game_id: gameId })
       .then(({ data, error }) => {
         if (!active) return;
         if (error)
-          console.error(
-            "[scores] player_best failed:",
-            error.code,
-            error.message,
-          );
+          console.error("[scores] my_best failed:", error.code, error.message);
         const row = error ? undefined : data?.[0];
         setResult({
           key,
@@ -54,7 +52,7 @@ export function HallYouRow({
     return () => {
       active = false;
     };
-  }, [gameId, name, key]);
+  }, [gameId, userId, name, key]);
 
   const best = result?.key === key ? result.best : null;
   if (!name || !best) return null;

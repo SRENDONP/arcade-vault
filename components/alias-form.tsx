@@ -16,7 +16,10 @@ type AliasFormProps =
   // First alias after signing up: saves and goes on to `next`.
   | { mode: "setup"; next: string }
   // Change it from /cuenta: saves and stays.
-  | { mode: "edit" };
+  | { mode: "edit" }
+  // Inside the game-over modal (SPEC 15): saves, calls refresh() and then
+  // onSaved; it never navigates, so the run in progress is kept.
+  | { mode: "inline"; onSaved: (alias: string) => void };
 
 // Alias of the player's profile (SPEC 14). The database is the last barrier:
 // UNIQUE + CHECK on public.profiles.alias, and only that column is writable.
@@ -39,6 +42,7 @@ export function AliasForm(props: AliasFormProps) {
     if ("error" in result) return setError(ALIAS_ERROR_MESSAGES[result.error]);
     if (result.alias === user.alias) {
       if (props.mode === "setup") router.push(props.next);
+      else if (props.mode === "inline") props.onSaved(result.alias);
       else setSaved(true);
       return;
     }
@@ -65,6 +69,8 @@ export function AliasForm(props: AliasFormProps) {
       if (props.mode === "setup") {
         router.refresh();
         router.push(props.next);
+      } else if (props.mode === "inline") {
+        props.onSaved(result.alias);
       } else {
         setSaved(true);
       }
@@ -83,17 +89,25 @@ export function AliasForm(props: AliasFormProps) {
     );
   }
 
+  const inline = props.mode === "inline";
+  const inputId = inline ? "alias-input-modal" : "alias-input";
+  const helpId = inline ? "alias-help-modal" : "alias-help";
+
   return (
-    <form onSubmit={submit} noValidate>
+    <form
+      onSubmit={submit}
+      noValidate
+      className={inline ? "alias-inline" : undefined}
+    >
       <div className="field">
-        <label htmlFor="alias-input" className="alias-label">
+        <label htmlFor={inputId} className="alias-label">
           <span>Alias</span>
           <span aria-hidden="true">
             {value.length}/{NAME_MAX}
           </span>
         </label>
         <input
-          id="alias-input"
+          id={inputId}
           className="alias-input"
           autoComplete="nickname"
           autoCapitalize="characters"
@@ -105,9 +119,9 @@ export function AliasForm(props: AliasFormProps) {
             setSaved(false);
           }}
           placeholder="PX_KAI"
-          aria-describedby="alias-help"
+          aria-describedby={helpId}
         />
-        <div id="alias-help" className="alias-help">
+        <div id={helpId} className="alias-help">
           1–{NAME_MAX} CARACTERES · A-Z, 0-9, Ñ, _ . - Y ESPACIO · ES EL NOMBRE
           DEL RANKING
         </div>
@@ -124,7 +138,11 @@ export function AliasForm(props: AliasFormProps) {
         </div>
       )}
 
-      <button className="btn lg mt-2 w-full" type="submit" disabled={pending}>
+      <button
+        className={inline ? "btn yellow w-full" : "btn lg mt-2 w-full"}
+        type="submit"
+        disabled={pending}
+      >
         {pending
           ? "GUARDANDO…"
           : props.mode === "setup"
