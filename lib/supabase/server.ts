@@ -31,7 +31,8 @@ export async function createClient(): Promise<SupabaseClient<Database>> {
           );
         } catch {
           // Called from a Server Component, where cookies are read-only.
-          // Safe to ignore until a proxy refreshes sessions (auth spec).
+          // Safe to ignore: proxy.ts (lib/supabase/proxy.ts) refreshes the
+          // session on every request before rendering.
         }
       },
     },

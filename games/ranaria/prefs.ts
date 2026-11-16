@@ -1,5 +1,5 @@
 // Preferencias de RANARIA en localStorage (prefijo av_ranaria_).
-// Todo acceso va en try/catch, igual que lib/session.ts: si el almacenamiento
+// Todo acceso va en try/catch, igual que games/caida/prefs.ts: si el almacenamiento
 // está bloqueado el juego sigue funcionando y solo deja de persistir.
 
 import { DEFAULT_SKIN, isSkinName, type SkinName } from "./skins";

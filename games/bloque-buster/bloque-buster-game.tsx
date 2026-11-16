@@ -12,6 +12,7 @@ import {
 } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { useSession } from "@/components/session-provider";
+import { DEFAULT_NAME } from "@/lib/scores";
 import { TouchControls } from "@/components/touch-controls";
 import type { PlayableProps } from "@/games";
 import { createTouchInput, type TouchPressEvent } from "@/lib/touch-input";
@@ -165,7 +166,7 @@ const blurTarget = (ev: MouseEvent<HTMLElement>) => ev.currentTarget.blur();
 
 export function BloqueBusterGame({ game }: PlayableProps) {
   const { user } = useSession();
-  const name = user?.name ?? "INVITADO";
+  const name = user?.alias ?? DEFAULT_NAME;
 
   const [phase, setPhase] = useState<Phase>("start");
   const [pauseView, setPauseView] = useState<PauseView>("main");
