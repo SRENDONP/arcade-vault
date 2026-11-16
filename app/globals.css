@@ -957,6 +957,34 @@
   .field .alias-label { display: flex; justify-content: space-between; gap: 12px; }
   .field .alias-input { font-family: var(--pixel); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
   .alias-help { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; line-height: 1.6; color: var(--ink-faint); }
+  /* SPEC 15: alias form inside the game-over modal (AliasForm mode="inline") */
+  .modal .alias-inline { margin: 18px 0 4px; text-align: left; }
+  .modal .alias-inline .field { margin-bottom: 10px; }
+  .modal .alias-inline .alias-help { font-size: 9px; }
+  .modal .alias-inline .auth-msg { margin: 0 0 10px; }
+  .modal .alias-inline .btn { min-height: 44px; }
+  /* SPEC 15: save states of the game-over modal. The player plate echoes .lb-row.you,
+     the row it becomes in the top 10 once saved. */
+  .modal .player-plate {
+    min-width: 0; min-height: 44px;
+    display: flex; align-items: center; gap: 10px; padding: 0 12px 0 9px;
+    background: rgba(245,255,0,0.05); border: 1px solid var(--line); border-left: 3px solid var(--yellow);
+    text-align: left;
+  }
+  .modal .player-plate-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--ink-faint); }
+  .modal .player-plate-alias {
+    font-family: var(--pixel); font-size: 13px; letter-spacing: 0.12em; color: var(--yellow);
+    text-shadow: 0 0 6px rgba(245,255,0,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .modal .save-btn { min-height: 44px; }
+  /* Plate over the button: a 10-character pixel alias does not fit beside it. */
+  .modal .input-row.save-ready { flex-direction: column; }
+  .modal .save-ready .player-plate { flex: 0 0 auto; justify-content: center; }
+  .modal .save-gate { margin: 18px 0 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .modal .save-gate .save-msg { margin: 0; color: var(--ink); }
+  @media (max-width: 520px) {
+    .modal .save-gate .btn { align-self: stretch; }
+  }
   /* SPEC 14: /cuenta, la ficha del jugador */
   .account-card { width: min(520px, 100%); }
   .account-hero { text-align: center; padding: 10px 0 22px; border-bottom: 1px dashed var(--line); }

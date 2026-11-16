@@ -40,32 +40,40 @@ export type Database = {
           created_at: string;
           game_id: string;
           id: number;
-          name: string;
           score: number;
+          user_id: string;
         };
         Insert: {
           created_at?: string;
           game_id: string;
           id?: never;
-          name: string;
           score: number;
+          user_id: string;
         };
         Update: {
           created_at?: string;
           game_id?: string;
           id?: never;
-          name?: string;
           score?: number;
+          user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "scores_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      player_best: {
-        Args: { p_game_id: string; p_name: string };
+      my_best: {
+        Args: { p_game_id: string };
         Returns: {
           created_at: string;
           rank: number;
@@ -73,7 +81,7 @@ export type Database = {
         }[];
       };
       submit_score: {
-        Args: { p_game_id: string; p_name: string; p_score: number };
+        Args: { p_game_id: string; p_score: number };
         Returns: {
           created_at: string;
           rank: number;
